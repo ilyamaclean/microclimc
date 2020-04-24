@@ -1,0 +1,34 @@
+Package: microclimc
+Type: Package
+Title: Below or above canopy microclimate modelling with R
+Version: 0.1.0
+Authors@R: c(
+    person("Ilya", "Maclean", email = "i.m.d.maclean@exeter.ac.uk", role = "cre"))
+Maintainer: Ilya M. D. Maclean <i.m.d.maclean@exeter.ac.uk>
+Description: The functions in the microclimc package contain tools for 
+    modelling the mechanistic processes that govern below or above canopy
+    microclimate. It includes tools for heat and vapour conductance, radiation 
+    absorbed or emmited by leaves and an implementation of the Thomas and Newton-Raphson 
+    algorithms for solving simultaniously heat fluxes between soil or air layers. It should be
+    used in conjuction with microctools, a package which contains a whole series of worker 
+    functions needed to run the model, and is included as a package dependancy. This package
+    contains just the higher level functions needed to run the model. Unlike 
+    microclima, the functions are designed for modelling time-series at single locations. 
+License: GPL-2
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 6.1.0
+Roxygen: list(markdown = TRUE)
+Remotes: ilyamaclean/microctools
+Imports: sp,
+    raster,
+    rgdal,
+    stats,
+    microctools
+Suggests: knitr,
+    rmarkdown,
+    plotly,
+	  testthat
+VignetteBuilder: knitr
+URL: https://github.com/ilyamaclean/microclimc
+BugReports: http://github.com/microclimc/issues
