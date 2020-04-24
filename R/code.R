@@ -527,7 +527,7 @@ paraminit <- function(m, sm, hgt, tair, u, relhum, tsoil, Rsw) {
 #' @import microctools
 #' @export
 #' @examples
-#' soilinit("Loam", 3600)
+#' soilinit("Loam")
 soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
   sel<-which(soilparams$Soil.type==soiltype)
   soilp<-soilparams[sel,]
