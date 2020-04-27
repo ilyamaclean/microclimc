@@ -932,7 +932,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' at height `reqhgt`, `SWin` and `LWin` the values above canopy, `tleaf` the mean leaf
 #' temperature and `L` the summed latent heat exchange for the entire canopy. If `reqhgt` is
 #' negative, the soil node nearest to that height is set at the value specified, `tout` is
-#' soil temperature at that node, `tleaf`, `rh`, `Swin` and `Lwin` are the mean values for
+#' soil temperature at that node, `tleaf`, `relhum`, `Swin` and `Lwin` are the mean values for
 #' the whole canopy. If `reqhgt` is not set, `tout`, `tleaf`, `relhum`, `SWin`
 #' and `LWin` are mean values for the whole canopy. The parameter `tsoil` is the temperature
 #' of soil below `sdepth`, which is assumed constant. If `tsoil` is not provided, it is
