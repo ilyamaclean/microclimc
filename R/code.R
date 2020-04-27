@@ -283,7 +283,7 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
 #' on the standard logarithmic height profile
 #' @param tz temperature at height `zu` above the canopy (deg C)
 #' @param uz wind speed at height `zu` above the canopy (m / s)
-#' @param zi height of `tz` and `uz` (m)
+#' @param zu height of `tz` and `uz` (m)
 #' @param zo height (m) for which temperature is required (see details)
 #' @param H sensible heat flux density (W / m^2). See details.
 #' @param hgt height of the canopy (m)
@@ -301,16 +301,16 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
 #' @examples
 #' abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3, 0.004)
 #' abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3, 0.004)
-abovecanopytemp <- function(tz, uz, zi, zo, H, hgt, PAI, zm0, pk = 101.3, psi_h = 0) {
-  if (zi < hgt) stop("zi must be greater or equal to hgt")
+abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3, psi_h = 0) {
+  if (min(zo) < hgt) stop("zi must be greater or equal to hgt")
   d <- zeroplanedis(hgt, PAI)
   zm <- roughlength(hgt, PAI, zm0)
   zh <- 0.2 * zm
-  uf <- (0.4 * uz) /  (log((zi - d) / zm) + psi_h)
+  uf <- (0.4 * uz) /  (log((zu - d) / zm) + psi_h)
   ph <- phair(tz, pk)
   cp <- cpair(tz)
   m <- H / (0.4 * ph * cp * uf)
-  tref <- tz + m * (log((zi - d) / zh) + psi_h)
+  tref <- tz + m * (log((zu - d) / zh) + psi_h)
   tc <- tref - m * (log((zo - d) / zh) + psi_h)
   tc
 }
