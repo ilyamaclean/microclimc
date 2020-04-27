@@ -4,7 +4,7 @@
 \alias{abovecanopytemp}
 \title{Calculates temperature above canopy}
 \usage{
-abovecanopytemp(tz, uz, zi, zo, H, hgt, PAI, zm0, pk = 101.3,
+abovecanopytemp(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3,
   psi_h = 0)
 }
 \arguments{
@@ -12,7 +12,7 @@ abovecanopytemp(tz, uz, zi, zo, H, hgt, PAI, zm0, pk = 101.3,
 
 \item{uz}{wind speed at height \code{zu} above the canopy (m / s)}
 
-\item{zi}{height of \code{tz} and \code{uz} (m)}
+\item{zu}{height of \code{tz} and \code{uz} (m)}
 
 \item{zo}{height (m) for which temperature is required (see details)}
 
@@ -41,6 +41,6 @@ exchange and \code{G} ground heat flux. This function is not valid for temperatu
 below canopy so \code{hgt} must be lower than \code{zi}.
 }
 \examples{
-abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3, 0.004)
-abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3, 0.004)
+abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3)
+abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3)
 }

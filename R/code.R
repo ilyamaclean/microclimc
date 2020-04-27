@@ -299,8 +299,8 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
 #' below canopy so `hgt` must be lower than `zi`.
 #' @export
 #' @examples
-#' abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3, 0.004)
-#' abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3, 0.004)
+#' abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3)
+#' abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3)
 abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3, psi_h = 0) {
   if (min(zo) < hgt) stop("zi must be greater or equal to hgt")
   d <- zeroplanedis(hgt, PAI)
