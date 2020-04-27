@@ -174,7 +174,7 @@ ThomasV <- function(Vo, tn, pk, theta, thetap, relhum, tair, tsoil, zth, gt, Vfl
 #' zo<- c(0:200) / 100
 #' uz <- windprofile(2, 2, zo, 2.3, 3, 2)
 #' plot(zo ~ uz, type = "l", xlab = "wind speed", ylab = "height")
-windprofile <- function(ui, zi, zo, a, PAI, hgt, psi_m = 0, hgtg = 0.05 * hgt, zm0 = 0.004) {
+windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hgt, zm0 = 0.004) {
   if (length(as.vector(hgt)) == 1) hgt <- hgt + zo * 0
   if (length(as.vector(psi_m)) == 1) psi_m <- psi_m + zo * 0
   if (length(as.vector(a)) == 1) a <- a + zo * 0
@@ -276,6 +276,43 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
     uz <- pmax(uz,uhr)
   }
   uz
+}
+#' Calculates temperature above canopy
+#'
+#' @description calaculates the temperature at the top of the canopy based
+#' on the standard logarithmic height profile
+#' @param tz temperature at height `zu` above the canopy (deg C)
+#' @param uz wind speed at height `zu` above the canopy (m / s)
+#' @param zi height of `tz` and `uz` (m)
+#' @param zo height (m) for which temperature is required (see details)
+#' @param H sensible heat flux density (W / m^2). See details.
+#' @param hgt height of the canopy (m)
+#' @param PAI total plant area index of the canopy. Used to calculate roughness lengths.
+#' @param zm0 roughness length governing momentum transfer of ground vegetation
+#' @param pk atmospheric pressure (kPa)
+#' @param psi_h diabatic correction factor for heat transfer
+#' @details Estimation of `H` requires estimation of temperature,
+#' so most either be derived by iteration of taken form the previous timestep.
+#' `H` is given by the net energy balance equation: `H` = `Rabs` - `Rem` - `L` - `G`
+#' where `Rabs` is absorbed radiation, `Rem` emitted radiation, `L` Latent heat
+#' exchange and `G` ground heat flux. This function is not valid for temperatures
+#' below canopy so `hgt` must be lower than `zi`.
+#' @export
+#' @examples
+#' abovecanopytemp(11, 2, 2, 1.5, 500, 1, 3, 0.004)
+#' abovecanopytemp(11, 2, 2, 0.5, 500, 0.25, 3, 0.004)
+abovecanopytemp <- function(tz, uz, zi, zo, H, hgt, PAI, zm0, pk = 101.3, psi_h = 0) {
+  if (zi < hgt) stop("zi must be greater or equal to hgt")
+  d <- zeroplanedis(hgt, PAI)
+  zm <- roughlength(hgt, PAI, zm0)
+  zh <- 0.2 * zm
+  uf <- (0.4 * uz) /  (log((zi - d) / zm) + psi_h)
+  ph <- phair(tz, pk)
+  cp <- cpair(tz)
+  m <- H / (0.4 * ph * cp * uf)
+  tref <- tz + m * (log((zi - d) / zh) + psi_h)
+  tc <- tref - m * (log((zo - d) / zh) + psi_h)
+  tc
 }
 #' Calculates leaf temperature of canopy layers
 #'

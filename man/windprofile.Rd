@@ -4,8 +4,8 @@
 \alias{windprofile}
 \title{Calculates wind profile for entire canopy}
 \usage{
-windprofile(ui, zi, zo, a, PAI, hgt, psi_m = 0, hgtg = 0.05 * hgt,
-  zm0 = 0.004)
+windprofile(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 *
+  hgt, zm0 = 0.004)
 }
 \arguments{
 \item{ui}{wind at reference height (m / s)}

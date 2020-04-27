@@ -58,5 +58,5 @@ as to ensure to ensure progressively thicker soil layers. If \code{reqdepth} is 
 nearest to \code{reqdepth} is set to \code{reqdepth}.
 }
 \examples{
-soilinit("Loam", 3600)
+soilinit("Loam")
 }
