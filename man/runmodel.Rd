@@ -7,7 +7,7 @@
 runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
   sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
   dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-  tsoil = NA)
+  tsoil = NA, metopen = TRUE, windhgt = 2)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables (see e.g. \code{weather})}
@@ -46,6 +46,13 @@ upon completion.}
 \item{plotsteps}{number of iterations run before resuls plotted if \code{plotout} set to TRUE}
 
 \item{tsoil}{optional stable temperature of the deepest soil layer (see details)}
+
+\item{metopen}{optional logical indicating whether the wind measurement used as an input to
+the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+for which temperatures are modelled (FALSE - see details)}
+
+\item{windhgt}{height above ground of wind measurement. If \code{metopen} is FALSE, must be above
+canopy.}
 }
 \value{
 a data.frame with the following elements:
@@ -83,11 +90,18 @@ calculated automatically, and \code{tout} and \code{relhum} are the temperature 
 at height \code{reqhgt}, \code{SWin} and \code{LWin} the values above canopy, \code{tleaf} the mean leaf
 temperature and \code{L} the summed latent heat exchange for the entire canopy. If \code{reqhgt} is
 negative, the soil node nearest to that height is set at the value specified, \code{tout} is
-soil temperature at that node, \code{tleaf}, \code{rh}, \code{Swin} and \code{Lwin} are the mean values for
+soil temperature at that node, \code{tleaf}, \code{relhum}, \code{Swin} and \code{Lwin} are the mean values for
 the whole canopy. If \code{reqhgt} is not set, \code{tout}, \code{tleaf}, \code{relhum}, \code{SWin}
 and \code{LWin} are mean values for the whole canopy. The parameter \code{tsoil} is the temperature
 of soil below \code{sdepth}, which is assumed constant. If \code{tsoil} is not provided, it is
 assigned a value equivelent to mean of \code{climdata$temp}.
+
+The wind profile of the canopy depends on the nature of the canopy itself, and often
+available wind measurements are for a nearby weather station located in open ground where
+it is possible that the height of the wind measurement is below the height of the canopy
+being studied. When \code{metopen} is TRUE, the wind profile of reference grass surface is
+used to derive estimates for two metres above the canopy of interest. When \code{metopen} is
+FALSE, \code{windhgt} must be above canopy and the profile above the canopy being studied is used.
 }
 \examples{
 tme<-as.POSIXlt(weather$obs_time, format = "\%Y-\%m-\%d \%H:\%M", tz = "UTC")

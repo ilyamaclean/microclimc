@@ -70,6 +70,8 @@ a list with the following elements:
 \code{Rswin} Incoming shortwave radiation. Here set to \code{Rabs}
 
 \code{Rlwin} Incoming longwave radiation. Here set to 0.2 * \code{Rabs}
+
+\code{psi_m} Diabatic correction factor. Here set to zero
 }
 \description{
 Generates a set of climate and conductivity parameters for running the

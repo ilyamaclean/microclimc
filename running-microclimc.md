@@ -1,7 +1,7 @@
 ---
 title: "Running microclim c"
 author: "Ilya Maclean"
-date: "`r Sys.Date()`"
+date: "2020-04-28"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Vignette Title}
@@ -9,12 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r setup, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
+
 ## Introduction
 This vignette describes the R package ‘microclimc’. In conjunction with `microctools`, the package contains a series of functions for modelling microclimate from first principles, below or above vegetated canopies and in the soil. The core assumption is that local anomalies from standard reference temperature or humidity, for example weather station data, can be modelled using the mechanistic processes that govern heat and vapour exchange.
 The modelling of temperatures above canopy is performed using classic one-dimensional diffusion theory (also known as K-theory). It is assumed that air does not absorb or emit radiation, but that the canopy itself does. The air immediately above the canopy is influenced by convective heat exchange with canopy. This in turn is governed by turbulent transport, whereby conductivity between the canopy and the air above it is determined by the shape of the wind profile, itself dependent on vegetation roughness as well as the wind speed at some measurable height.
@@ -31,7 +26,8 @@ The Vignette describes the various workings of the model in detail. Those wishin
 ### Above canopy
 The wind profile above canopy typically follows a logarithmic height profile, which extrapolates to zero roughly two thirds of the way to the top of the canopy. The profile itself is thus dependent on the height of the canopy, but also on the roughness of the vegetation layer, which causes wind shear. The effects can be seen using function `windprofile`:
 
-```{r, fig.show='hold'}
+
+```r
 # Generate two wind profiles
 library(microclimc)
 zo<-c(100:200)/100 # heights above canopy
@@ -44,13 +40,16 @@ plot(zo~wind2, type = "l", col = "red", xlim = c(0,2.5), lwd = 2,
      xlab = "", ylab = "")
 ```
 
+![plot of chunk unnamed-chunk-1](figure/unnamed-chunk-1-1.png)
+
 Here wind speed `ui` at height `zi` is assumed to be 2.5 m/s. The attenuation coefficient a is irrelevant for above canopy winds, so can be left at its default value 2. PAI is the total one-sided area of vegetation per unit ground area, and as can be seen, wind speed immediately above canopy is slower when PAI is high.
 
 More precisely, the wind profile extrapolates to zero and some height d + zm, where d is the so called zero plane displacement height and zm is the roughness length governing momentum transfer. This can be evaluated using functions `zeroplanedis` and `roughlength` in the microctools package.
 
 One other consideration is the degree of surface heating or cooling. When the surface is strongly heated as occurs on sunny days, the air immediately above the surface is more turbulent and wind speeds are a little greater. The connverse happens at night, when the forms stable layers. This is accounted for through the use of a diabatic correction factor, `psi_m` itself calculated using function `diabatic_cor` in the `microctools` package. When the surface is strongly heated, `psi_m` becomes negative and drops to values of around -1.5. In contrast, when the surface is much coller than the air above it, it increases to values around 4. A value of zero represents neutral conditions, with neither strong coolign or heating. The effects of this on the wind proile can be seen as follows:
 
-```{r, fig.show='hold'}
+
+```r
 # Generate two wind profiles
 library(microclimc)
 zo<-c(100:200)/100 # heights above canopy
@@ -63,10 +62,13 @@ plot(zo~wind2, type = "l", col = "red", xlim = c(0,2.5), lwd = 2,
      xlab = "", ylab = "")
 ```
 
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+
 ### Below canopy
 Within the canopy itself, wind speed decreases exponentially with depth. This is true of the upper 90% of the canopy, though in the bottom portion, where wind speeds are less impeded, a new logairthmic height profile is developed. Here the parameters `a`, `hgtg` and `zm0` come into play. The parameter `a` is the attenuation coefficient and is contingent on leaf density and angle. It can be calaculated using function `attencoef` in the microctools package. `hgtg` and `zm0` are the height and roughness length of ground vegetation and determine the shape of the profile in bottom 10% of the canopy. The effects of canopy density on the attenuation of wind below canopy can be seen by extending the profile above canopy to include below canopy:
 
-```{r, fig.show='hold'}
+
+```r
 # Generate two wind profiles
 library(microclimc)
 library(microctools)
@@ -82,11 +84,14 @@ plot(zo~wind2, type = "l", col = "red", xlim = c(0,2.5), lwd = 2,
      xlab = "", ylab = "")
 ```
 
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png)
+
 Here `hgtg` and `zm0` have been left at their default values, but the attenuation coefficients have been calculated separately for dense and sparse canopy. Here `x` is a coefficient representing the leaf angle distribution, specifically the ratio of the vertical to horizontal projection of a representative volume of foliage. Four additional parameters have been left at their default values, namely (i) `lw`, the mean leaf width, which is a determinant of the density of foliage, (ii) `cd`, the drag coefficient that determines the loss of momentum by dragging leaves, that ranges from 0.05 to 0.5 depending on leaf inclination and shape, (iii)  `iw`, a relative turbulence intensity coefficient, which determines the relationship between mean eddy velocity and wind speed. Typical values are around 0.2, but in dense foliage can range from 0.3 near to the top of the canopy to about 0.8 near the soil surface. Finally, the coefficient `phi_m` is a measure of air stability inside the canopy, similar in concept to `psi_m`. However, here a value of zero represents neutral conditions. It can be calculated using function `diabatic_cor_can` in the microctools package. 
 
 In the above example, a single attenuation coefficient for the entire canopy is assumed. In reality leaf density is usually greatest near the top of the canopy and the attenuation coefficient is itself variable within the canopy. A further consieration is the wind profile towards the bottom of the canopy, where vegetation in less dense. The shape profile here in forest environments is also dependent upon how far from the edge of the forest one is intersted in, as close to the edge, wind speeds and tree trunk level are greater than at the height of the densest point in the canopy, whereas in the middle of forest, the attentuation and trunk level is determined primarily by the density of the canopy above. The effects of this can be seen by using the `windcanopy` function in stead of the `windprofile` function as in the following example. 
 
-```{r, fig.show='hold'}
+
+```r
 library(microclimc)
 # Generate two wind profiles
 m <- 100
@@ -119,6 +124,8 @@ plot(z ~ uz2, type = "l", xlab = "", ylab = "", xlim = c(0,1.5),
      col = rgb(0,0,1,0.5), lwd = 2)
 ```
 
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-2.png)
+
 Here, leaf areas are calculated seperately for 100 canopy nodes using the `PAIgeometry` function in the `microctools` package, the flexibility of which is explained in greater detail below. The wind speed at the top of each canopy layer is then calculated iteratively working down through the canopy, at two distances from the edge. In the first plot the vertical profile of the plant area index is shown. In the second plot, the wind profiles are shown demonstrating the marked difference in wind speed close to the ground, in areas o forest near to the edge.
 
 ## Vegetation geometry
@@ -130,7 +137,8 @@ The microctools package contains a series of functions for flexibly modelling ve
 Plant area index profiles determine wind speeds, the attenuation of radiation with the canopy, the amount of radiation absorbed or emitted the canopy and also latent heat fluxes.
 The function `PAIgeometry` can be used to create a profile. Here the total plant area index must be known, and the user must specify the number of canopy layers for which seperate values are desired, as well as two parameters that control the degree of skew and spread of values. Users are encouraged to explore the influence of this until broadly realistic profiles are obtained as in the example below:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 pai1 <- PAIgeometry(100, 10, skew = 4, spread = 70)
 pai2 <- PAIgeometry(100, 10, skew = 7, spread = 70)
@@ -139,13 +147,16 @@ plot(z~pai1, type = "l", xlab = "Plant Area Index", ylab = "Height", lwd = 2, co
 plot(z~pai2, type = "l", xlab = "Plant Area Index", ylab = "Height", lwd = 2, col = "darkgreen")
 ```
 
+![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png)![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-2.png)
+
 
 ### Generating vegetation thickness profiles
 
 Vegetation thickness, in combination with the plant area index, determine the volumetric specific heat capacity of canopy layers. Close to the bottom of the canopy, despite lower
 plant area index values, heat storage may be singificant due to the thickness of tree trunks and lower branches. The function `thickgeometry` in the microctools package can be used to create a profile. The following is an illustrative example of how this function can be used:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 pai <- PAIgeometry(1000, 10, 7, 70)
 thick <- thickgeometry(1000,0.4,0.7,0.1)
@@ -158,59 +169,97 @@ plot(z ~ dens, type = "l", lwd = 2, col = "brown",
      ylab = "Height (m)")
 ```
 
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png)
+
 ### Generating fraction of green leaves profiles
 Dead and live vegetation have markedly different reflective proportions and the fraction of live vegetation therefore controls absorbed radiation. The fraction of green vegetation also controls photosynthes hence stomatal conductance and latent heat fluxes. The function `LAIfrac` in the microctools package can be used to create realisric profiles as in the exampe below.
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 z<-c(1:100)/10
 plot(z~LAIfrac(100,0.8, 5), type="l", ylim = c(0,1))
 plot(z~LAIfrac(100,0.8, 10), type="l", ylim = c(0,1))
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-2.png)
+
 ### Generating relative turbulence intensity profiles
 Relative turbulence intensity determines the relationship between mean eddy velocity and wind speed. In the example below, default values are used, which are those for maize crop from Shaw et al (1974) Agricultural Meteorology, 13: 419-425.
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 z <- c(1:100)/30
 iw<- iwgeometry(100)
 plot(z~iw, type = "l", lwd = 2, col = "red")
 ```
 
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+
 ### Generating total plant area index from habitat
 Plant Area Index (the total one-sided plant area per unit ground area) is one of the key determinants of below-canopy microclimates, but typically varies seasonally. This function generates realistic seasonal cylces in plant area index for a suite of broad habitat types calibrated against MODIS data. The habitats are as follows:
-```{r}
+
+```r
 library(microctools)
 habitats
+#>    number                         descriptor
+#> 1       1        Evergreen needleleaf forest
+#> 2       2         Evergreen Broadleaf forest
+#> 3       3        Deciduous needleleaf forest
+#> 4       4         Deciduous broadleaf forest
+#> 5       5                       Mixed forest
+#> 6       6                  Closed shrublands
+#> 7       7                    Open shrublands
+#> 8       8                     Woody savannas
+#> 9       9                           Savannas
+#> 10     10                   Short grasslands
+#> 11     11                    Tall grasslands
+#> 12     12                 Permanent wetlands
+#> 13     13                          Croplands
+#> 14     14                 Urban and built-up
+#> 15     15 Cropland/Natural vegetation mosaic
+#> 16     16       Barren or sparsely vegetated
+#> 17     17                         Open water
 ```
 
 The `PAIfromhabitat` function in the microctools package generates PAI values for every hour over the course of a year. For example, for a decidious woodland in Cornwall, UK:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 pxh <- PAIfromhabitat("Deciduous broadleaf forest", 50, -5.2, 2015)
 plot(pxh$lai ~ as.POSIXct(pxh$obs_time), type = "l", xlab = "Month",
      ylab = "Plant Area Index", ylim = c(0, 6), lwd = 2, col = "darkgreen")
 ```
 
+![plot of chunk unnamed-chunk-10](figure/unnamed-chunk-10-1.png)
+
 the `PAIfromhabitat` function also returns an estimate of canopy height and the leaf angle distribution coefficient:
 
-```{r}
+
+```r
 library(microctools)
 pxh <- PAIfromhabitat("Deciduous broadleaf forest", 50, -5.2, 2015)
 pxh$height
+#> [1] 15
 pxh$x
+#> [1] 1.2
 ```
 
 ### Generating all vegetation parameters from habitat
 It is also possible to generate all the parameters needed to run the model from habitat type,
 with the user specifying the period over which parameters are needed (so that realistic seasonal cyles can be simulated) and the number of canopy nodes. For example:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 tme<-as.POSIXlt(c(0:364) * 24 * 3600, origin = "2015-01-01 00:00", tz = "UTC")
 vegp <- habitatvars("Deciduous broadleaf forest", 50, -5.2, tme, 100)
 attributes(vegp)
+#> $names
+#>  [1] "hgt"    "PAI"    "x"      "lw"     "cd"     "iw"     "hgtg"  
+#>  [8] "zm0"    "pLAI"   "refls"  "refg"   "refw"   "reflp"  "vegem" 
+#> [15] "gsmax"  "q50"    "thickw" "cpw"    "phw"    "kwood"
 # Extract PAI and plot
 z<-(c(1:100)/100) * vegp$hgt
 # the returned PAI is a mtrix of 8760 hourly values for each of 100 canopy nodes
@@ -218,6 +267,8 @@ z<-(c(1:100)/100) * vegp$hgt
 PAI <- apply(vegp$PAI,1,mean)
 plot(z~PAI, type = "l", xlab = "PAI", ylab = "Height", lwd = 2, col = "darkgreen")
 ```
+
+![plot of chunk unnamed-chunk-12](figure/unnamed-chunk-12-1.png)
 
 Here `tme` is a POSIXlt object of times for which paramaters are needed. if `tme` is a single value `PAI` and `pLAI` are vectors of length `m` giving Plant Area Index values and proportions of green vegetation for each canopy node `m`. If `tme` is a vector of times, `PAI` and `pLAI` are arrays of dimension m x number of hours. I.e. seperate `PAI` and `pLAI` values are derived for each hour and node. If `tme` is not in hourly time increments, it is converted to hourly time increments, from 00:00 hrs on the first day up to and including 23:00 hrs on the final day. 
 
@@ -233,7 +284,8 @@ where S(0) is the flux density of radiation on a horizontal surface above the ca
 In the absence of scattering, the extinction coefficient, `K` represents the area of shadow cast on a horizontal surface by the canopy divided by the area of leaves in the canopy. For diffuse radiation, the angle of the leaves relative to the solar beam makes no difference, 
 and `K` is effectively 1. In reality, the leaves of canopies are not black and do transmit an reflect radiation and a simple correction factor based on leaf reflectivity can be applied, the effects of which are evident from the example below. Diffuse tranmission is calculated using function `cantransdif` in the microctools package:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 PAI <- c(0:100)/10 # Plant Area Index
 S0 <- 500 # Radiation above canopy
@@ -244,6 +296,8 @@ par(new = T)
 plot(SP2 ~ PAI, type = "l", ylim = c(0,500), col = "green", ylab = "")
 ```
 
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png)
+
 ### Incoming direct radiation
 Here, the extinction coefficient, K, is determined also be by leaf angle distributions as a lower proportion of radiation is transmitted under low solar angles, when vegetation is vertically oriented. Campbell (1986) Agricultural and Forest Meteorology, 36:317-321 shows that the effects of leaf angles can be really captured using an ellispoidal inclination angle distribution characterised by a single coefficient, `x`, representing the ratio of vertical to horizontal projection of a represenative volume of foliage. `K` is then a function of `x` as zenith angle ($\theta$):
 
@@ -251,7 +305,8 @@ $K = \sqrt{\frac{x^2+tan^2\theta}{x+1.774(x+1.182)^{0.773}}}$
 
 The function `cantransdir` takes as an input, the solar altitude rather than the zenith angle, which is simply 90 - zeith angle. The effects of leaf angle distribution for a range of solar altitudes are illustrated in the example below using function `cantransdir`:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 sa<-c(0:90) # solar altitude
 rad1 <- 500 * cantransdir(3, x = 4, sa) # Horizontal leaves 
@@ -263,12 +318,15 @@ plot(rad2 ~ sa, type = "l", col = "darkgreen", lwd = 2, xlab = "", ylab = "",
      ylim = c(0, 300))
 ```
 
+![plot of chunk unnamed-chunk-14](figure/unnamed-chunk-14-1.png)
+
 As can be seen, the transmission of radiation at high solar altitudes is much higher for vertically orientated leaves. Solar altitudefor a given location and date/time is computed using the `solalt` function. If the relative proportion of direct and diffuse radiation is unknown, it can be estimated using `difprop`. Combined direct and diffuse radiation transmission is computed using function `cansw`, which includes the option to automatically estimate the proportion o diffuse radiation if unknown. All these functions are in the microctools package.
 
 ### Longwave radiation
 All objects emit temperature as a linear function of their absolute tmeperature to the power of 4. Above canopy, a proportion of emitted radiation is absorbed and then re-emitted by the sky. Underneath the canopy, emitted radiation is also absorbed and reimmited by the canopy. However, the portion absorbed and re-emmited by back downwards from the sky is also partially absorbed and re-emmited upwards by the canopy, so the net longwave radiation, i.e. emitted radiation less that received from the canopy and sky exhibits a more complex relationship with Plant Area Index, as can be seen in the example below in which net lognwave radiation is computed for a temperature of 11 degrees C under a range of sky emissivities using function `canlw` in the microctools package:   
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 PAI <- c(0:1000) / 500
 lw1 <- canlw(11, PAI, skyem = 0.9)  # High sky emissivity (cloudy)
@@ -280,6 +338,8 @@ plot(lw2$lwnet ~ PAI, type = "l", col = "blue", lwd = 2, ylim = c(0,200), ylab =
 par(new = TRUE)
 plot(lw3$lwnet ~ PAI, type = "l", col = "red", lwd = 2, ylim = c(0,200), ylab = "")
 ```
+
+![plot of chunk unnamed-chunk-15](figure/unnamed-chunk-15-1.png)
 
 ### Absorbed and emitted radiation
 The functions `leafabs` and `leafem` can be used to specifically calculate combined long- and short-wave radiation absorned by a leaf, and the longwave radiation emitted by the leaf.
@@ -314,7 +374,8 @@ The functions for computing conductivity use molar conductances ($mol m^{-2} s^{
 ### Conduction under laminer convection
 Calculation of conduction under both forced and free convection as been combined into a single function `gforcedfree` in the microctools package. Both the forced and free component depend on the size of the object in the direction of airflow, being lower for larger objects, which offer more scope for the air to develop into orderly laminar layers. The forced component depends also on wind speed, but the free component depends on the temperature gradient, taken from the previous time-step when running the model. Since the molar density and specific heat capacity have slight temperature dependancies, and the density also a slight pressure dependancy, these are also included as input. The following example illustrates the efects of wind speed and size:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 # As function of `d` (length in direction of flow)
 d <- c(1:1000) / 100
@@ -326,12 +387,15 @@ g<-gforcedfree(0.1,u,11,4)
 plot(g~u, type = "l")
 ```
 
+![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-1.png)![plot of chunk unnamed-chunk-16](figure/unnamed-chunk-16-2.png)
+
 The point at which convection switches from forced to free can clearly be seen.
 
 ### Conduction under turbulent convection above canopy
 Conduction under turbulent convection above canopy depends on a number of factors, but primarily wind speed and the distance over which conductance is wanted. Since local wind speed is dependent on the roughness of the canopy, there is also a dependance on canopy height and Plant Area Index. the degree of surface heating affects the stability of the air, and as with wind profile diabatic correction factors can also be applied, though here there is an additional correction factor for heat exchange, as well as momentum exchange. Again,  since the molar density and specific heat capacity have slight temperature / pressure dependancies, both are included as inputs. Most often, conduction between the heat exchange surface of the canopy and some height `z1` above the canopy is desired. If this is the case, `zo` can be left at its defauly value of NA. Conductance above canopy is calculated using function `gturb`. The effects of wind speed on conductance is illustrated in the example below:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 hgt <- 1 # canopy height
 z1 <- c(1:100)/100 + hgt
@@ -343,9 +407,12 @@ par(new = T)
 plot(z1 ~ g2, type = "l", lwd = 2, col = "red", xlab = "", ylab = "", xlim = c(0, 10))
 ```
 
+![plot of chunk unnamed-chunk-17](figure/unnamed-chunk-17-1.png)
+
 Conducivity clearly declines with wind speed. Since molar conductivity also decreases with distance, the conductivity between the canopy heat exchange surface and the air above it declines with height. However, the greater turbulent transfer of heat associated wiht higher wind speeds at greater heights above the ground, means the decline is not that marked. To get a feel for the relative conductivity molar conductivity can be expressed as $W m^{-1}$:
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 hgt <- 1 # canopy height
 PAI <- 3 # Plant area index
@@ -358,6 +425,8 @@ plot(z1 ~ k, type = "l", lwd = 2, col = "blue", ylab = "Height (m)",
      xlab = expression(paste("Conductance ",(~W/m^2))))
 ```
 
+![plot of chunk unnamed-chunk-18](figure/unnamed-chunk-18-1.png)
+
 ### Conduction under turbulent convection below canopy
 Conductivity below canopy is assumed to depend on the factors that control the wind speed
 profile, and the inputs to the `gcanopy` funcion in the microctools package are similar
@@ -366,7 +435,8 @@ which conduction is required and also for the temperatures at these heights, whi
 affect the temperature gradient and minimum conduction. The effects of wind speed at the top 
 of the canopy on molar conductance within the canopy are shown in the example below.
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 # Height of heat exchange surface
 z1 <- c(1:100) / 100
@@ -381,9 +451,12 @@ plot(z1 ~ g2, type = "l", lwd = 2, col = "blue", ylab = "Height",
      xlim = c(0, 120), xlab = "Molar conductance")
 ```
 
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png)
+
 To compare conductance from the ground to various heights below and above ground in relative terms, both are computed in the example below and expressed as $W m^{-1}$. 
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 library(microclimc)
 hgt <- 1 # canopy height
@@ -408,6 +481,8 @@ plot(z~k, type = "l", lwd = 2, col = "red", ylab = "Height (m)",
 abline(a=1, b = 0, lwd = 2, col = "darkgreen") # canopy top
 ```
 
+![plot of chunk unnamed-chunk-20](figure/unnamed-chunk-20-1.png)
+
 Here it should be noted that the inverse of conductance, resistance, acts in series, rather as in electrical circuits. The conductance from the ground to heights above the canopy can thus be computed by first calculating resistance from the ground to the top of the canopy and adding this to the resistance from the top of the canopy to heights above the canopy.
 
 ### Stomatal conductance
@@ -417,7 +492,8 @@ $g_s= \frac{g_{smax} Q_a}{Q_a+Q_{a50}}$
 
 where $Q_{a50}$ is the value of $Q_a$ when $g_s=g_{smax}/2$, here given a default value of 100 $\mu mol^{-2} s^{-1}$. As in the example below, stomatal conductance can thus be calculated using a combination of the `cansw` for computing radiation and and the `layercond` function, which computes stomatal conductance for a given input radiation value, provided maximum stomatal conductance is know. A comphrensive list of maximum stomatal conductances for different vegetation types can be found in Körner (1994) in Cadwell ed. Ecophysiology of Photosynthesis. Ecological Studies Vol 100, Springer, Hiedelberg, pp 463-490, but the `habitatvars` function returns typical values for broad habitat types. 
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 pai <- PAIgeometry(100, 3, 7, 70)
 paic <- rev(cumsum(rev(pai))) # Cumulative PAI
@@ -429,6 +505,8 @@ z <- c(1:100) / 10 # Height
 plot(z ~ gs, type = "l", lwd = 2, col = "blue", xlab = "Stomatal conductance",
      ylab = "Height") 
 ```
+
+![plot of chunk unnamed-chunk-21](figure/unnamed-chunk-21-1.png)
 
 ## Temperature
 The general equation that describes temperature relationships is:
@@ -442,7 +520,8 @@ complication is that that the wind profile depends on a diabatic correction fact
 yet the calaculation of this relies on knowing the friction velocity `uf`, itself dependent
 on wind speed. In the model itself, the diabatic correction factor in the previous time-step is used, though as in the example below, it can be calculated easily by iteration. Below temperature profiles are shown for two wind speeds.
 
-```{r, fig.show='hold'}
+
+```r
 library(microctools)
 library(microclimc)
 # Calculate diabatic correction coefficient by iteration (High wind speed)
@@ -488,6 +567,8 @@ plot(zo ~ tc, type = "l", lwd = 2, col = "red", xlab = "Temperature", ylab = "He
      xlim = c(11,25))
 ```
 
+![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-1.png)![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-2.png)![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-3.png)![plot of chunk unnamed-chunk-22](figure/unnamed-chunk-22-4.png)
+
 It can clearly be seen that temperatures near the top the canopy are markedly greater when H is positive (the converse is true when H is negative). It is also evident that temperatures near the canopy surface are much greater under lower wind speeds owing to reduced thermal mixing. Since the flux gradients are non-linear due to increases in turbulence above ground, the temperature profiles are also non-linear. 
 
 ### Leaf and sub-canopy air temperature
@@ -516,7 +597,8 @@ $T_a^{j+1} = T_a^j + 0.5 \frac{\Delta T P_{AI}}{c_p \rho (1 - V_{den})} (g_{ref}
 
 where $\rho$ is the molar density of air. Here again, all values, with the exception of $T_a^j$ and $T_a^{j+1}$ represent means during the timestep. By asusming soil temperatures are fairly relatively stable over the relatively short time-steps of the model, such that soil temperature in the previous can be used, the equations above can be re-arranged and solved simultaniously for $T_a^{j+1}$ and $T_L^{j+1}$.  These calculations are performed for each canopy layer using the `leaftemp` function as in the example below:
 
-```{r, fig.show='hold'}
+
+```r
 # Generate example paramaters for function (m = number of canopy layers, 
 # sm = number of soil layers:
 library(microctools)
@@ -533,6 +615,8 @@ ltemp <- leaftemp(tair = 11, relhum = 80, pk = 101.3, timestep = 60, previn$gt, 
 plot(z ~ ltemp$tleaf, type = "l", col = "darkgreen", lwd = 2, 
      xlab = "Leaf temperature", ylab = "Height")
 ```
+
+![plot of chunk unnamed-chunk-23](figure/unnamed-chunk-23-1.png)
 
 Here the functions `paraminit` is a function used to generate list of parameters needed to run the model. It provides approximate parameters for use in the first time-step of the model, though these are later updated as the model proceeds. They are used here for ullustration only. The function `soilinit` returns the soil parameters needed to run the microclimate model for a given soil type. It can be seen that leaf temperatures are highest near the top of the canopy, where absorbed radiation is greatest. 
 
@@ -584,7 +668,8 @@ $e_{ref}$ is the equivelent vapour pressure of the soil. It can be computed form
 ### One time step
 The full model is run over a single time-step using function `runonestep`. This is useful, if bespoke outputs, such as the temperature from multiple soil or canopy layers are needed. In the example below, initial soil parameters are derived from soil type using `soilinit`. Crude estimates of initial conditions are then generated using `paraminit`. The list of variables returned by `paraminit` is of the same format as the outputs from `runonestep`. The vegetation paramaters are derived form habitat type using `habitatvars`. A list of climate variables of the type normally available form standard weather stations is then created. The model is then run iteratively 100 times with outputs from `paraminit` replaced by those from `runonestep` so as to actual model the temperature profiles in the first time-step as opposed to jjust estimating them crudely. A temperature profile at the outset and after the running the model for 100 iterations are shown. 
 
-```{r, fig.show='hold'}
+
+```r
 library(microclimc)
 # Create initail parameters
 tme <- as.POSIXlt(0, origin = "2020-05-04 12:00", tz = "GMT")
@@ -599,19 +684,24 @@ for (i in 1:100) previn <- runonestep(climvars, previn, vegp, soilp, 60, tme, 50
 plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = i)
 ```
 
+![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-1.png)![plot of chunk unnamed-chunk-24](figure/unnamed-chunk-24-2.png)
+
 It can be seen that the simple linear profile initial specified is replaced by a profile in which temperature is maximised ~3/4 of the way to the top of the canopy. Here the synergistic effects on temperature of greater leaf density, attenuated radiation and reduced wind speed are such that temperature is maximised.   
 
 ### Model spin-up
 
 The above process of repeatedly running the model for the first time-step to establish initial conditions can also be achieved using the function `spinup` as in th example below. Here the example `weather` dataset include with the package is used in place of `climvars`. The function knows to select the first entry. 
 
-```{r, fig.show='hold'}
+
+```r
 tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
 vegp <- habitatvars(4, 50, -5, tme, m = 20)
 soilp<- soilinit("Loam")
 # run spinup and produce profile plot
 modelout<-spinup(weather, vegp, soilp, lat = 50, long = -5, steps = 50) 
 ```
+
+![plot of chunk unnamed-chunk-25](figure/unnamed-chunk-25-1.png)
 
 By leaving the input plotout at its default (TRUE) a soil, below-canopy and above-canopy air temperature profile (red) and leaf temperature profile (green) are plotted at the end.
 
@@ -620,7 +710,8 @@ To run the model of multiple timesteps the `runmodel` function is used. There ar
 
 The start and end dates for running the model, and the time steps are automatically determined from input `climdata` data.frame, in this case the inbuilt `weather` dataset. User specified input datasets should use the same format and column names as `weather`. The `hourly_ncep` function in the microclima package is a function that retrieves climate forcing data needed to run the model for any location on earth. Outputs from this function can be reformated for use with the microclimc package using the function `hourlyncep_convert` in the  microctools package.  
 
-```{r eval=FALSE}
+
+```r
 library(microclimc)
 library(microctools)
 tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")

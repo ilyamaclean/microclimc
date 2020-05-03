@@ -6,7 +6,8 @@
 \usage{
 runonestep(climvars, previn, vegp, soilp, timestep, tme, lat, long,
   edgedist = 100, sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3,
-  thetap = 0.3, merid = 0, dst = 0, n = 0.6)
+  thetap = 0.3, merid = 0, dst = 0, n = 0.6, metopen = TRUE,
+  windhgt = 2)
 }
 \arguments{
 \item{climvars}{a of climate variables needed to run the run the model for one timestep (see dataset \code{\link[=climvars]{climvars()}})}
@@ -42,6 +43,13 @@ runonestep(climvars, previn, vegp, soilp, timestep, tme, lat, long,
 \item{dst}{an optional numeric value representing the time difference from the timezone meridian (hours, e.g. +1 for BST if \code{merid} = 0).}
 
 \item{n}{forward / backward weighting for Thomas algorithm (see \code{\link[=Thomas]{Thomas()}})}
+
+\item{metopen}{optional logical indicating whether the wind measurement used as an input to
+the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+for which temperatures are modelled (FALSE - see details)}
+
+\item{windhgt}{height above ground of wind measurement. If \code{metopen} is FALSE, must be above
+canopy.}
 }
 \value{
 a list of of model outputs for the current timestep with the same format as \code{previn}
@@ -56,7 +64,13 @@ example. If \code{reqhgt} is set, and below the height of the canopy, the node n
 height is set at the value specified. The returned value \code{tabove} is then the temperature
 at te top of the canopy. If \code{reqhgt} is above canopy, nodes are calculated automatically,
 but \code{tabove} is the temperature at height \code{reqhgt}. If temperatures below ground are
-needed, the depth can be set using \code{\link[=soilinit]{soilinit()}}
+needed, the depth can be set using \code{\link[=soilinit]{soilinit()}}. The wind profile of the canopy depends on
+the nature of the canopy itself, and often available wind measurements are for a nearby
+weather station located in open ground where it is possible that the height of the wind
+measurement is below the height of the canopy being studied. When \code{metopen} is TRUE, the
+wind profile of reference grass surface is used to derive estimates for two metres above the
+canopy of interest. When \code{metopen} is FALSE, \code{windhgt} must be above canopy and the profile above
+the canopy being studied is used.
 }
 \examples{
 # Create initail parameters

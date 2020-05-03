@@ -19,6 +19,7 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @param dp proportion of `Rsw` that is diffuse radiation. If not provided, then calculated using [microctools::difprop()]
 #' @param merid optional longitude (decimal degrees) of the local time zone meridian (0 for GMT).
 #' @param dst optional value representing the time difference from the timezone meridian
+#' @param clump clumpiness factor for canopy (0-1)
 #'
 #' @return a list of with the following components:
 #' @return `aRsw` absorbed Shortwave radiation (W / m2)
@@ -27,16 +28,21 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @import microctools
 #' @export
 leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw, vegem, skyem, dp = NA,
-                   merid = round(long/15, 0) * 15, dst = 0) {
+                   merid = round(long/15, 0) * 15, dst = 0, clump = 0) {
   jd<-julday(tme = tme)
   lt<-tme$hour+tme$min/60+tme$sec/3600
   if (is.na(dp)) dp<-difprop(Rsw,jd,lt,lat,long,merid=merid,dst=dst)
   sa<-solalt(lt,lat,long,jd,merid=merid,dst=dst)
+  sa2<-ifelse(sa<5,5,sa)
   ref<-pLAI*refls+(1-pLAI)*refw
-  aRsw <- (1-ref) * cansw(Rsw,dp,jd,lt,lat,long,PAIc,x,ref,merid=merid,dst=dst)
-  aRlw <- canlw(tair, PAIc, 1-vegem, skyem = skyem)$lwabs
+  sunl<-psunlit(PAIc,x,sa,clump)
+  mul<-radmult(x,sa2)
+  aRsw <- (1-ref) * cansw(Rsw,dp,jd,lt,lat,long,PAIc,x,ref,merid=merid,dst=dst,clump=clump)
+  aRsw <- sunl * mul * aRsw + (1-sunl) * aRsw
+  aRlw <- canlw(tair, PAIc, 1-vegem, skyem = skyem, clump = clump)$lwabs
   return(list(aRsw=aRsw, aRlw=aRlw, ref=ref))
 }
+
 #' Calculates radiation emitted by leaf
 #'
 #' @description Calculates the flux density of radiation emitted by the leaf.
@@ -497,6 +503,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
 #' @return `G` Ground heat flux (W / m^2). Here set to zero
 #' @return `Rswin` Incoming shortwave radiation. Here set to `Rabs`
 #' @return `Rlwin` Incoming longwave radiation. Here set to 0.2 * `Rabs`
+#' @return `psi_m` Diabatic correction factor. Here set to zero
 #' @importFrom stats spline
 #' @import microctools
 #' @export
@@ -530,7 +537,7 @@ paraminit <- function(m, sm, hgt, tair, u, relhum, tsoil, Rsw) {
   return(list(tc = tc, soiltc = soiltc, tleaf = tleaf, tabove = tair, uz = uz, z = z, sz = sz,
               zabove = hgt, rh = rh, relhum = relhum, tair = tair, tsoil = tsoil,
               pk = 101.3, Rabs = Rabs, gt = gt, gv = gv, gha = gha, H = 0, L = rep(0, m),
-              G = 0, Rswin = Rabs, Rlwin = 0.2 * Rabs))
+              G = 0, Rswin = Rabs, Rlwin = 0.2 * Rabs, psi_m = 0))
 }
 #' Returns soil parameters for a given soil type
 #'
@@ -594,6 +601,11 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' @param merid an optional numeric value representing the longitude (decimal degrees) of the local time zone meridian (0 for GMT).
 #' @param dst an optional numeric value representing the time difference from the timezone meridian (hours, e.g. +1 for BST if `merid` = 0).
 #' @param n forward / backward weighting for Thomas algorithm (see [Thomas()])
+#' @param metopen optional logical indicating whether the wind measurement used as an input to
+#' the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+#' for which temperatures are modelled (FALSE - see details)
+#' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
+#' canopy.
 #' @return a list of of model outputs for the current timestep with the same format as `previn`
 #' @import microctools
 #' @export
@@ -603,7 +615,13 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' height is set at the value specified. The returned value `tabove` is then the temperature
 #' at te top of the canopy. If `reqhgt` is above canopy, nodes are calculated automatically,
 #' but `tabove` is the temperature at height `reqhgt`. If temperatures below ground are
-#' needed, the depth can be set using [soilinit()]
+#' needed, the depth can be set using [soilinit()]. The wind profile of the canopy depends on
+#' the nature of the canopy itself, and often available wind measurements are for a nearby
+#' weather station located in open ground where it is possible that the height of the wind
+#' measurement is below the height of the canopy being studied. When `metopen` is TRUE, the
+#' wind profile of reference grass surface is used to derive estimates for two metres above the
+#' canopy of interest. When `metopen` is FALSE, `windhgt` must be above canopy and the profile above
+#' the canopy being studied is used.
 #'
 #' @examples
 #' # Create initail parameters
@@ -620,7 +638,7 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' }
 runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 100,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-                       dst = 0, n = 0.6) {
+                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2) {
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
   tair<-climvars$tair; relhum<-climvars$relhum; pk<-climvars$pk; u<-climvars$u
@@ -632,7 +650,13 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   cp<-cpair(tc) # specific heat of air
   lambda <- -42.575*tc+44994 # Latent heat of vapourisation (J / mol)
   # Adjust wind to 2 m above canopy
-  u2<-u*log(67.8*hgt-5.42)/log(67.8*(hgt+2)-5.42)
+  if (metopen) {
+    if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
+    u2<-u*log(67.8*hgt-5.42)/log(67.8*(hgt+2)-5.42)
+  } else {
+    u2 <- u
+    if (windhgt != (2+hgt)) u2 <- windprofile(u, windhgt, hgt+2, a = 2, sum(vegp$PAI), hgt, previn$psi_m)
+  }
   u2[u2 < 0.5] <- 0.5
   # Generate heights of nodes
   z<-c((1:m)-0.5)/m*hgt
@@ -647,8 +671,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   d<-zeroplanedis(hgt,sum(vegp$PAI))
   zm<-roughlength(hgt, sum(vegp$PAI), vegp$zm0)
   uf<-(0.4*u2)/log(((hgt+2)-d)/zm)
-  cand<-diabatic_cor_can(tc, previn$uz, z, vegp$PAI, vegp$x, vegp$lw)
   abod<-diabatic_cor(tair, pk, H, uf, (hgt+2), d)
+  cand<-diabatic_cor_can(tc, previn$uz, z, vegp$PAI, vegp$x, vegp$lw)
   psi_m<-abod$psi_m; psi_h<-abod$psi_h; phi_m<-cand$phi_m; phi_h<-cand$phi_h
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
@@ -691,7 +715,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # ========== Calculate absorbed radiation =========== #
   PAIc<-rev(cumsum(rev(vegp$PAI)))
   Rabss<-leafabs(Rsw,tme,tair,previn$soiltc[1],lat,long,PAIc,vegp$pLAI,vegp$x,vegp$refls,
-                 vegp$refw,vegp$vegem,skyem,dp,merid,dst)
+                 vegp$refw,vegp$vegem,skyem,dp,merid,dst,vegp$clump)
   Rabs<-Rabss$aRsw+Rabss$aRlw
   # ============= Conductivities =============== #
   # Vapour conductivity
@@ -805,7 +829,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   Rlwin<-canlw(tn, sum(vegp$PAI), 1-vegp$vegem, skyem = climvars$skyem)$lwin
   dataout<-list(tc=tn,soiltc=tnsoil,tleaf=tln$tleaf,tabove=tcan,uz=uz,z=z,sz=sz,zabove=zabove,
                 rh=rh,relhum=relhum,tair=tair,tsoil=tsoil,pk=pk,Rabs=Rabs,
-                gt=gt,gv=gv,gha=gha,H=H,L=L,G=G,Rswin=Rswin,Rlwin=Rlwin)
+                gt=gt,gv=gv,gha=gha,H=H,L=L,G=G,Rswin=Rswin,Rlwin=Rlwin,psi_m=psi_m)
   return(dataout)
 }
 #' internal function to sort out vegetation parameters
@@ -841,6 +865,11 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' @param plotout optional logical indicating whether to a plot a profile of temperatures
 #' upon completion.
 #' @param steps number of iterations for which which to run spin-up
+#' @param metopen optional logical indicating whether the wind measurement used as an input to
+#' the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+#' for which temperatures are modelled (FALSE - see details)
+#' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
+#' canopy.
 #' @return a list of model outputs as for [paraminit()] or [runonestep()]
 #'
 #' @details If `reqhgt` is set, and below the height of the canopy, the canopy node nearest
@@ -857,7 +886,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' modelout<-spinup(weather, vegp, soilp, lat = 50, long = -5)
 spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                    sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-                   dst = 0, n = 0.6, plotout = TRUE, steps = 200) {
+                   dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
+                   windhgt = 2) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   timestep<-round(as.numeric(tme[2])-as.numeric(tme[1]),0)
   reqdepth <- NA
@@ -879,7 +909,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
   for (i in 1:steps) {
     previn  <- runonestep(climvars, previn, vegp2, soilp, timestep, tme[1], lat,
                           long, edgedist, sdepth, reqhgt, zu, theta, thetap,
-                          merid, dst, n)
+                          merid, dst, n, metopen, windhgt)
     H[i]<-previn$H
     previn$H<-mean(H)
   }
@@ -909,6 +939,11 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' upon completion.
 #' @param plotsteps number of iterations run before resuls plotted if `plotout` set to TRUE
 #' @param tsoil optional stable temperature of the deepest soil layer (see details)
+#' @param metopen optional logical indicating whether the wind measurement used as an input to
+#' the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+#' for which temperatures are modelled (FALSE - see details)
+#' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
+#' canopy.
 #' @return a data.frame with the following elements:
 #' @return `obs_time` POSIXlt object of times associated wiht eahc output
 #' @return `reftemp` air temperature (deg C) at reference height - i.e. `climdata$temp`
@@ -938,6 +973,13 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' of soil below `sdepth`, which is assumed constant. If `tsoil` is not provided, it is
 #' assigned a value equivelent to mean of `climdata$temp`.
 #'
+#' The wind profile of the canopy depends on the nature of the canopy itself, and often
+#' available wind measurements are for a nearby weather station located in open ground where
+#' it is possible that the height of the wind measurement is below the height of the canopy
+#' being studied. When `metopen` is TRUE, the wind profile of reference grass surface is
+#' used to derive estimates for two metres above the canopy of interest. When `metopen` is
+#' FALSE, `windhgt` must be above canopy and the profile above the canopy being studied is used.
+#'
 #' @examples
 #' tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
 #' vegp <- microctools::habitatvars(4, lat = 50, long = -5, tme, m = 20)
@@ -957,11 +999,10 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                      sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                      dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-                     tsoil = NA) {
-
+                     tsoil = NA, metopen = TRUE, windhgt = 2) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   previn <- spinup(climdata,vegp,soilp,lat,long,edgedist,reqhgt,sdepth,zu,theta,
-                   thetap,merid,dst,n,plotout,steps)
+                   thetap,merid,dst,n,plotout,steps,metopen,windhgt)
   timestep<-round(as.numeric(tme[2])-as.numeric(tme[1]),0)
   reqdepth <- NA
   if (is.na(reqhgt) == F) {
@@ -984,7 +1025,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
                    Rsw = climdata$swrad[i], dp = dp[i])
     vegp2<-.vegpsort(vegp, i)
     previn <- runonestep(climvars,previn,vegp2,soilp,timestep,tme[i],lat,long,
-                         edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n)
+                         edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n,metopen,windhgt)
     if (i%%plotsteps == 0) plotresults(previn, vegp, climvars, i)
     if (is.na(reqhgt)) {
       tout[i] <- mean(previn$tc)

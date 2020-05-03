@@ -5,7 +5,8 @@
 \title{Calculates radiation absorbed by leaf}
 \usage{
 leafabs(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw,
-  vegem, skyem, dp = NA, merid = round(long/15, 0) * 15, dst = 0)
+  vegem, skyem, dp = NA, merid = round(long/15, 0) * 15, dst = 0,
+  clump = 0)
 }
 \arguments{
 \item{Rsw}{Incoming shortwave radiation (W / m2)}
@@ -39,6 +40,8 @@ leafabs(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw,
 \item{merid}{optional longitude (decimal degrees) of the local time zone meridian (0 for GMT).}
 
 \item{dst}{optional value representing the time difference from the timezone meridian}
+
+\item{clump}{clumpiness factor for canopy (0-1)}
 }
 \value{
 a list of with the following components:

@@ -6,7 +6,8 @@
 \usage{
 spinup(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
   sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-  dst = 0, n = 0.6, plotout = TRUE, steps = 200)
+  dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
+  windhgt = 2)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables needed to run the run the model (dataset should follow format of \code{\link[=weather]{weather()}})}
@@ -41,6 +42,13 @@ spinup(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
 upon completion.}
 
 \item{steps}{number of iterations for which which to run spin-up}
+
+\item{metopen}{optional logical indicating whether the wind measurement used as an input to
+the model is from a nearby weather station located in open ground (TRUE) or above the canopy
+for which temperatures are modelled (FALSE - see details)}
+
+\item{windhgt}{height above ground of wind measurement. If \code{metopen} is FALSE, must be above
+canopy.}
 }
 \value{
 a list of model outputs as for \code{\link[=paraminit]{paraminit()}} or \code{\link[=runonestep]{runonestep()}}
