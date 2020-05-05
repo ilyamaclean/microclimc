@@ -111,12 +111,12 @@ dataout <- runmodel(weather, vegp, soilp, lat = 50, long = -5)
 par(mfrow=c(2,1))
 plot(tout~as.POSIXct(obs_time), data = dataout, type = "l", col = "red",
      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-par(new=T)
+par(new=TRUE)
 plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
      xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
 plot(tleaf~as.POSIXct(obs_time), data = dataout, type = "l", col = "darkgreen",
      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-par(new=T)
+par(new=TRUE)
 plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
     xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
 }

@@ -379,7 +379,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Sort out thicknesses
   m<-length(gt)-1
   zth<-c(z[2:m]-z[1:(m-1)],vegp$hgt-(z[m]+z[m-1])/2)
-  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)
+  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5
   # Sort out conductivitites
   gt<-0.5*gt+0.5*previn$gt
   gv<-0.5*gv+0.5*previn$gv
@@ -736,7 +736,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # conductivity and specific heat
   vden<-(vegp$PAI*vegp$thickw)
   mult<-1-vden
-  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)
+  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)*0.5
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
@@ -992,12 +992,12 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' par(mfrow=c(2,1))
 #' plot(tout~as.POSIXct(obs_time), data = dataout, type = "l", col = "red",
 #'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-#' par(new=T)
+#' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
 #'      xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
 #' plot(tleaf~as.POSIXct(obs_time), data = dataout, type = "l", col = "darkgreen",
 #'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-#' par(new=T)
+#' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
 #'     xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
 runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
