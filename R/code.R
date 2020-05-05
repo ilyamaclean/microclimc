@@ -901,6 +901,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
                       tsoil, climdata$swrad[1])
   dp <- climdata$difrad[1] / climdata$swrad[1]
   dp[is.na(dp)] <- 0.5
+  dp <- ifelse(climdata$swrad[1] == 0, 0.5, dp)
   climvars <- list(tair = climdata$temp[1], relhum = climdata$relhum[1], pk = climdata$pres[1],
                    u2 = climdata$windspeed[1], tsoil = tsoil, skyem = climdata$skyem[1],
                    Rsw = climdata$swrad[1], dp = dp)
