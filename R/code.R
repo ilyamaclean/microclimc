@@ -9,11 +9,12 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @param tground ground temperature (deg C)
 #' @param lat latitude (decimal degrees)
 #' @param long longitude (decimal degrees)
-#' @param PAIc Vector of cumulative plant area indices for each canopy layer
+#' @param PAI Vector of plant area indices for each canopy layer
 #' @param pLAI Proportion of plant area that is green vegetation
 #' @param x the ratio of vertical to horizontal projections of leaf foliage
 #' @param refls reflectivity of green vegetation to shortwave radiation
 #' @param refw reflectivity of woody vegetation to shortwave radiation
+#' @param refg reflectivity of ground to shortwave radiation
 #' @param vegem emissivity of vegetation
 #' @param skyem sky emissivity
 #' @param dp proportion of `Rsw` that is diffuse radiation. If not provided, then calculated using [microctools::difprop()]
@@ -27,8 +28,10 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @return `ref` mean area-wighted reflectivity of vegetation (green and woody)
 #' @import microctools
 #' @export
-leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw, vegem, skyem, dp = NA,
+leafabs <-function(Rsw, tme, tair, tground, lat, long, PAI, pLAI, x, refls, refw, refg, vegem, skyem, dp = NA,
                    merid = round(long/15, 0) * 15, dst = 0, clump = 0) {
+  PAIc <- rev(cumsum(PAI))
+  PAIg <- cumsum(PAI)
   jd<-jday(tme = tme)
   lt<-tme$hour+tme$min/60+tme$sec/3600
   if (is.na(dp)) dp<-difprop(Rsw,jd,lt,lat,long,merid=merid,dst=dst)
@@ -38,11 +41,12 @@ leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, ref
   sunl<-psunlit(PAIc,x,sa,clump)
   mul<-radmult(x,sa2)
   aRsw <- (1-ref) * cansw(Rsw,dp,jd,lt,lat,long,PAIc,x,ref,merid=merid,dst=dst,clump=clump)
-  aRsw <- sunl * mul * aRsw + (1-sunl) * aRsw
+  aGround <- refg * cansw(Rsw,dp,jd,lt,lat,long,sum(PAI),x,mean(ref),merid=merid,dst=dst,clump=clump)
+  aGround <- (1-ref) * cansw(aGround,dp,jd,lt,lat,long,PAIg,x,ref,merid=merid,dst=dst,clump=clump)
+  aRsw <- sunl * mul * aRsw + (1-sunl) * aRsw + aGround
   aRlw <- canlw(tair, PAIc, 1-vegem, skyem = skyem, clump = clump)$lwabs
   return(list(aRsw=aRsw, aRlw=aRlw, ref=ref))
 }
-
 #' Calculates radiation emitted by leaf
 #'
 #' @description Calculates the flux density of radiation emitted by the leaf.
@@ -713,9 +717,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   mrge<-lmm$mrge; gtx<-lmm$gtx; zth<-lmm$zth
   tc <- tc[-1]
   # ========== Calculate absorbed radiation =========== #
-  PAIc<-rev(cumsum(rev(vegp$PAI)))
-  Rabss<-leafabs(Rsw,tme,tair,previn$soiltc[1],lat,long,PAIc,vegp$pLAI,vegp$x,vegp$refls,
-                 vegp$refw,vegp$vegem,skyem,dp,merid,dst,vegp$clump)
+  Rabss<-leafabs(Rsw,tme,tair,previn$soiltc[1],lat,long,vegp$PAI,vegp$pLAI,vegp$x,
+                 vegp$refls,vegp$refw,vegp$refg,vegp$vegem,skyem,dp,merid,dst,vegp$clump)
   Rabs<-Rabss$aRsw+Rabss$aRlw
   # ============= Conductivities =============== #
   # Vapour conductivity
