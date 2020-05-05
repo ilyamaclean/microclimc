@@ -733,7 +733,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # conductivity and specific heat
   vden<-(vegp$PAI*vegp$thickw)
   mult<-1-vden
-  zla <- mixinglength(vegp$PAI,vegp$hgt,vegp$x,vegp$lw)
+  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
