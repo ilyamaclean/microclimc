@@ -19,13 +19,13 @@ knitr::opts_chunk$set(
 This vignette describes the R package ‘microclimc’. In conjunction with `microctools`, the package contains a series of functions for modelling microclimate from first principles, below or above vegetated canopies and in the soil. The core assumption is that local anomalies from standard reference temperature or humidity, for example weather station data, can be modelled using the mechanistic processes that govern heat and vapour exchange.
 The modelling of temperatures above canopy is performed using classic one-dimensional diffusion theory (also known as K-theory). It is assumed that air does not absorb or emit radiation, but that the canopy itself does. The air immediately above the canopy is influenced by convective heat exchange with canopy. This in turn is governed by turbulent transport, whereby conductivity between the canopy and the air above it is determined by the shape of the wind profile, itself dependent on vegetation roughness as well as the wind speed at some measurable height.
 
-Modelling microclimate below canopy is less straightforward as understanding of the turbulence dynamics, and hence the exchange of vapour and heat within canopies continues to be an area of active research. Early work tried to relate observed wind and temperature profiles to local turbulent fluxes using K-theory. However K-theory only applies when the scale of the mechanism is much smaller than that of the gradient. It was originally thought that turbulence was generated mainly in the wakes behind leaves etc., but more recent evidence suggest large, coherent eddies are often primary mechanisms governing heat transfer. While alternative approaches, including Lanrangian and Eulerian advection-diffusion models have been used with some success, it is generally acknowledged that parameterise the models with field data is extremely challenging. Nevertheless, based on the assumptions that (1) the distribution of radiant energy in the canopy can be expressed as function of cumulative leaf area, (2) net radiation absorbed by each leaf can be partitioned between sensible and latent heat, (3) heat and vapour transfer is governed by wind speeds, which in turn can be approximated adequately with knowledge of the density of the canopy and (4) conditions within the canopy are often quite closely coupled with those above canopy, it is possible to realistically model below-canopy microclimates.
+Modelling microclimate below canopy is less straightforward, as understanding of below-canopy turbulence dynamics, and hence the exchange of vapour and heat within canopies, continues to be an area of active research. Early work tried to relate observed wind and temperature profiles to local turbulent fluxes using K-theory. However K-theory only applies when the scale of the mechanism is much smaller than that of the gradient. It was originally thought that turbulence was generated mainly in the wakes behind leaves etc., but more recent evidence suggest large, coherent eddies are often primary mechanisms governing heat transfer. While alternative approaches, including Lanrangian and Eulerian advection-diffusion models have been used with some success, it is generally acknowledged that parameterising such models with field data is extremely challenging. Nevertheless, based on the assumptions that (1) the distribution of radiant energy in the canopy can be expressed as function of cumulative leaf area, (2) net radiation absorbed by each leaf can be partitioned between sensible and latent heat, (3) heat and vapour transfer is governed by wind speeds, which in turn can be approximated adequately with knowledge of the density of the canopy and (4) because conditions within the canopy are often quite closely coupled with those above canopy, it is possible to realistically model below-canopy microclimates.
 
 This is achieved by dividing the canopy into a specific number of layers and running the model in time-steps. Standard heat and water-balance equations are used to model heat and vapour exchanges between leaves and air and with the surface layer of the ground and the air above canopy, and by linearising the equations, the temperature and humidity of each are resolved. Both transient (significant heat storage) and steady-state balances are considered, and the model automatically determines which is appropriate. Heat and vapour exchange between each canopy layer are also modelled simultaneously by means of Gauss elimination using the Thomas algorithm. A closed-form solution to this problem necessitates boundary conditions to be set. The upper boundary limits are the above canopy temperature and humidity of the air, which form the inputs to the model. The lower boundary conditions are set by simultaneously considering soil temperatures at a specified number of depths (see below). The boundary condition at the bottom of the soil column is specified as remaining at some constant, measured temperature, which if unknown is assumed to be equivalent to mean annual air temperature. Heat storage within each layer, particularly relevant for soil temperature, is explicitly considered, but to avoid the fluxes exceeding the heat capacity of air layers, the air layers are automatically merged to fewer layers if necessary.
 
-Soil temperatures at specific depths are resolved using the Thomas algorithm method described above. Additional heat is in the form of radiant energy transmitted through the canopy, and heat loss in the form of emitted heat are subtracted or added to the surface layer.  Latent heat loss/gain resulting from bare soil evapotranspiration and condensation are also quantified. In this version of the model the user must specify the volumetric soil water content at each time step. Later iterations will explicitly consider water loss / gain from the soil layer and the exchange of water between layers by means of the Newton-Raphson algorithm.
+Soil temperatures at specific depths are resolved using the Thomas algorithm method described above. Additional heat is in the form of radiant energy transmitted through the canopy, and heat loss in the form of emitted heat is subtracted or added to the surface layer.  Latent heat loss/gain resulting from bare soil evapotranspiration and condensation are also quantified. In this version of the model the user must specify the volumetric soil water content at each time step. Later iterations will explicitly consider water loss / gain from the soil layer and the exchange of water between layers by means of the Newton-Raphson algorithm.
 
-The Vignette describes the various workings of the model in detail. Those wishing to dive straight in may wish to go strait to the Running the model section at the end.
+The Vignette describes the various workings of the model in detail. Those wishing to dive in may wish to go straight to the [Running the model](#running-the-model) section at the end.
 
 ## Wind
 ### Above canopy
@@ -48,7 +48,7 @@ Here wind speed `ui` at height `zi` is assumed to be 2.5 m/s. The attenuation co
 
 More precisely, the wind profile extrapolates to zero and some height d + zm, where d is the so called zero plane displacement height and zm is the roughness length governing momentum transfer. This can be evaluated using functions `zeroplanedis` and `roughlength` in the microctools package.
 
-One other consideration is the degree of surface heating or cooling. When the surface is strongly heated as occurs on sunny days, the air immediately above the surface is more turbulent and wind speeds are a little greater. The connverse happens at night, when the forms stable layers. This is accounted for through the use of a diabatic correction factor, `psi_m` itself calculated using function `diabatic_cor` in the `microctools` package. When the surface is strongly heated, `psi_m` becomes negative and drops to values of around -1.5. In contrast, when the surface is much coller than the air above it, it increases to values around 4. A value of zero represents neutral conditions, with neither strong coolign or heating. The effects of this on the wind proile can be seen as follows:
+One other consideration is the degree of surface heating or cooling. When the surface is strongly heated as occurs on sunny days, the air immediately above the surface is more turbulent and wind speeds are a little greater. The connverse happens at night, when the air forms stable layers. This is accounted for through the use of a diabatic correction factor, `psi_m`, itself calculated using function `diabatic_cor` in the `microctools` package. When the surface is strongly heated, `psi_m` becomes negative and drops to values of around -1.5. In contrast, when the surface is much cooler than the air above it, it increases to values around 4. A value of zero represents neutral conditions, with neither strong cooling nor heating. The effects of this on the wind proile can be seen as follows:
 
 ```{r, fig.show='hold'}
 # Generate two wind profiles
@@ -64,7 +64,7 @@ plot(zo~wind2, type = "l", col = "red", xlim = c(0,2.5), lwd = 2,
 ```
 
 ### Below canopy
-Within the canopy itself, wind speed decreases exponentially with depth. This is true of the upper 90% of the canopy, though in the bottom portion, where wind speeds are less impeded, a new logairthmic height profile is developed. Here the parameters `a`, `hgtg` and `zm0` come into play. The parameter `a` is the attenuation coefficient and is contingent on leaf density and angle. It can be calaculated using function `attencoef` in the microctools package. `hgtg` and `zm0` are the height and roughness length of ground vegetation and determine the shape of the profile in bottom 10% of the canopy. The effects of canopy density on the attenuation of wind below canopy can be seen by extending the profile above canopy to include below canopy:
+Within the canopy itself, wind speed decreases exponentially with depth. This is true of the upper 90% of the canopy, though in the bottom portion, where wind speeds are less impeded, a new logairthmic height profile is developed. Here the parameters `a`, `hgtg` and `zm0` come into play. The parameter `a` is the attenuation coefficient and is contingent on leaf density and angle. It can be calaculated using function `attencoef` in the microctools package. `hgtg` and `zm0` are the height and roughness length of ground vegetation and determine the shape of the profile in the bottom 10% of the canopy. The effects of canopy density on the attenuation of wind below canopy can be seen by extending the profile above canopy to include below canopy:
 
 ```{r, fig.show='hold'}
 # Generate two wind profiles
@@ -84,7 +84,7 @@ plot(zo~wind2, type = "l", col = "red", xlim = c(0,2.5), lwd = 2,
 
 Here `hgtg` and `zm0` have been left at their default values, but the attenuation coefficients have been calculated separately for dense and sparse canopy. Here `x` is a coefficient representing the leaf angle distribution, specifically the ratio of the vertical to horizontal projection of a representative volume of foliage. Four additional parameters have been left at their default values, namely (i) `lw`, the mean leaf width, which is a determinant of the density of foliage, (ii) `cd`, the drag coefficient that determines the loss of momentum by dragging leaves, that ranges from 0.05 to 0.5 depending on leaf inclination and shape, (iii)  `iw`, a relative turbulence intensity coefficient, which determines the relationship between mean eddy velocity and wind speed. Typical values are around 0.2, but in dense foliage can range from 0.3 near to the top of the canopy to about 0.8 near the soil surface. Finally, the coefficient `phi_m` is a measure of air stability inside the canopy, similar in concept to `psi_m`. However, here a value of zero represents neutral conditions. It can be calculated using function `diabatic_cor_can` in the microctools package. 
 
-In the above example, a single attenuation coefficient for the entire canopy is assumed. In reality leaf density is usually greatest near the top of the canopy and the attenuation coefficient is itself variable within the canopy. A further consieration is the wind profile towards the bottom of the canopy, where vegetation in less dense. The shape profile here in forest environments is also dependent upon how far from the edge of the forest one is intersted in, as close to the edge, wind speeds and tree trunk level are greater than at the height of the densest point in the canopy, whereas in the middle of forest, the attentuation and trunk level is determined primarily by the density of the canopy above. The effects of this can be seen by using the `windcanopy` function in stead of the `windprofile` function as in the following example. 
+In the above example, a single attenuation coefficient for the entire canopy is assumed. In reality leaf density is usually greatest near the top of the canopy and the attenuation coefficient is itself variable within the canopy. A further consideration is the wind profile towards the bottom of the canopy, where vegetation in less dense. The shape profile here in forest environments is also dependent upon how far from the edge of the forest one is interested in, as close to the edge, wind speeds at tree trunk level are greater than at the height of the densest point in the canopy, whereas in the middle of forest, the attentuation at trunk level is determined primarily by the density of the canopy above. The effects of this can be seen by using the `windcanopy` function instead of the `windprofile` function as in the following example. 
 
 ```{r, fig.show='hold'}
 library(microclimc)
@@ -119,15 +119,15 @@ plot(z ~ uz2, type = "l", xlab = "", ylab = "", xlim = c(0,1.5),
      col = rgb(0,0,1,0.5), lwd = 2)
 ```
 
-Here, leaf areas are calculated seperately for 100 canopy nodes using the `PAIgeometry` function in the `microctools` package, the flexibility of which is explained in greater detail below. The wind speed at the top of each canopy layer is then calculated iteratively working down through the canopy, at two distances from the edge. In the first plot the vertical profile of the plant area index is shown. In the second plot, the wind profiles are shown demonstrating the marked difference in wind speed close to the ground, in areas o forest near to the edge.
+Here, leaf areas are calculated seperately for 100 canopy nodes using the `PAIgeometry` function in the `microctools` package, the flexibility of which is explained in greater detail below. The wind speed at the top of each canopy layer is then calculated iteratively working down through the canopy, at two distances from the edge. In the first plot the vertical profile of the plant area index is shown. In the second plot, the wind profiles are shown demonstrating the marked difference in wind speed close to the ground, in areas of forest near to the edge (red) relative to farther from the edge (blue).
 
 ## Vegetation geometry
 
-The microctools package contains a series of functions for flexibly modelling vegetation geometry. These range from user specified means of generating realistic leaf area profiles where some priort knowledge of total leaf area and the shape of the profile is known through to flexible functions where it is assumed that nothing is known except the broad habitat type. Obviously the more that is known the greater the accuracy of the microclimate models, but the intention is to equip users with a range of options for modelling geometry with variable knowledge.
+The microctools package contains a series of functions for flexibly modelling of vegetation geometry. These range from user specified means of generating realistic leaf area profiles where some prior knowledge of total leaf area and the shape of the profile is known, through to flexible functions where it is assumed that nothing is known except the broad habitat type. Obviously the more that is known the greater the accuracy of the microclimate models, but the intention is to equip users with a range of options for modelling geometry with variable knowledge.
 
 ### Generating plant area index profiles
 
-Plant area index profiles determine wind speeds, the attenuation of radiation with the canopy, the amount of radiation absorbed or emitted the canopy and also latent heat fluxes.
+Plant area index profiles determine wind speeds, the attenuation of radiation with the canopy, the amount of radiation absorbed or emitted by the canopy and also latent heat fluxes.
 The function `PAIgeometry` can be used to create a profile. Here the total plant area index must be known, and the user must specify the number of canopy layers for which seperate values are desired, as well as two parameters that control the degree of skew and spread of values. Users are encouraged to explore the influence of this until broadly realistic profiles are obtained as in the example below:
 
 ```{r, fig.show='hold'}
@@ -143,7 +143,7 @@ plot(z~pai2, type = "l", xlab = "Plant Area Index", ylab = "Height", lwd = 2, co
 ### Generating vegetation thickness profiles
 
 Vegetation thickness, in combination with the plant area index, determine the volumetric specific heat capacity of canopy layers. Close to the bottom of the canopy, despite lower
-plant area index values, heat storage may be singificant due to the thickness of tree trunks and lower branches. The function `thickgeometry` in the microctools package can be used to create a profile. The following is an illustrative example of how this function can be used:
+plant area index values, heat storage may be significant due to the thickness of tree trunks and lower branches. The function `thickgeometry` in the microctools package can be used to create a profile. The following is an illustrative example of how this function can be used:
 
 ```{r, fig.show='hold'}
 library(microctools)
@@ -159,7 +159,7 @@ plot(z ~ dens, type = "l", lwd = 2, col = "brown",
 ```
 
 ### Generating fraction of green leaves profiles
-Dead and live vegetation have markedly different reflective proportions and the fraction of live vegetation therefore controls absorbed radiation. The fraction of green vegetation also controls photosynthes hence stomatal conductance and latent heat fluxes. The function `LAIfrac` in the microctools package can be used to create realisric profiles as in the exampe below.
+Dead and live vegetation have markedly different reflective proportions and the fraction of live vegetation therefore controls absorbed radiation. The fraction of green vegetation also controls photosynthesis, and therefore resulting stomatal conductance and latent heat fluxes. The function `LAIfrac` in the microctools package can be used to create realistic profiles as in the exampe below.
 
 ```{r, fig.show='hold'}
 library(microctools)
@@ -213,25 +213,26 @@ vegp <- habitatvars("Deciduous broadleaf forest", 50, -5.2, tme, 100)
 attributes(vegp)
 # Extract PAI and plot
 z<-(c(1:100)/100) * vegp$hgt
-# the returned PAI is a mtrix of 8760 hourly values for each of 100 canopy nodes
+# the returned PAI is a matrix of 8760 hourly values for each of 100 canopy nodes
 # Calculate the mean PAI for each node:
 PAI <- apply(vegp$PAI,1,mean)
 plot(z~PAI, type = "l", xlab = "PAI", ylab = "Height", lwd = 2, col = "darkgreen")
 ```
 
-Here `tme` is a POSIXlt object of times for which paramaters are needed. if `tme` is a single value `PAI` and `pLAI` are vectors of length `m` giving Plant Area Index values and proportions of green vegetation for each canopy node `m`. If `tme` is a vector of times, `PAI` and `pLAI` are arrays of dimension m x number of hours. I.e. seperate `PAI` and `pLAI` values are derived for each hour and node. If `tme` is not in hourly time increments, it is converted to hourly time increments, from 00:00 hrs on the first day up to and including 23:00 hrs on the final day. 
+Here `tme` is a POSIXlt object of times for which parameters are needed. If `tme` is a single value, `PAI` and `pLAI` are vectors of length `m` giving Plant Area Index values and proportions of green vegetation for each canopy node `m`. If `tme` is a vector of times, `PAI` and `pLAI` are arrays of dimension m x number of hours (i.e. seperate `PAI` and `pLAI` values are derived for each hour and node). If `tme` is not in hourly time increments, it is converted to hourly time increments, from 00:00 hrs on the first day up to and including 23:00 hrs on the final day. 
 
-In the plot fo the profile, it can be seen that the woodland is automatically assumed to ave an undestory, and hence PAI values near the ground are higher and a little way above the ground. The function can also be used with user specified total plant area index values. In the example above `PAIt`, the total plant area index for the canopy is left at its default `NA`, and is instead estimated using the `PAIfromhabitat` function. Alternatively users can specify `PAIt`. If a single value is provided, then the length of `tme` is ignored and returned `PAI` is a vector of values for each node. If `PAIt` is a vector of values of length `m` then seasonally adjusted values for each node and hour of `tme` are returned. If `PAIt` is a vector of values of any length other than `m` spline interpolated values for each node and hour of `tme` are returned. 
+In the plot fo the profile, it can be seen that the woodland is automatically assumed to have an undestory, and hence PAI values near the ground are higher a little bit above the ground. The function can also be used with user specified total plant area index values. In the example above `PAIt`, the total plant area index for the canopy is left at its default `NA`, and is instead estimated using the `PAIfromhabitat` function. Alternatively users can specify `PAIt`. If a single value is provided, then the length of `tme` is ignored and returned `PAI` is a vector of values for each node. If `PAIt` is a vector of values of length `m` then seasonally adjusted values for each node and hour of `tme` are returned. If `PAIt` is a vector of values of any length other than `m` spline interpolated values for each node and hour of `tme` are returned. 
 
 ## Radiation
 Transmission of  radiation by vegetation has generally been described using an equation similar to Beer's law:
 
 $S(P) = S(0) exp(-KP)$
 
-where S(0) is the flux density of radiation on a horizontal surface above the canopy, S(P) is the flux density below plant area index, P, and K is the extinction coefficient for the canopy. 
+where S(0) is the flux density of radiation on a horizontal surface above the canopy, S(P) is the flux density below plant area index, P, and K is the extinction coefficient for the canopy.  
+
 ### Incoming diffuse radiation
 In the absence of scattering, the extinction coefficient, `K` represents the area of shadow cast on a horizontal surface by the canopy divided by the area of leaves in the canopy. For diffuse radiation, the angle of the leaves relative to the solar beam makes no difference, 
-and `K` is effectively 1. In reality, the leaves of canopies are not black and do transmit an reflect radiation and a simple correction factor based on leaf reflectivity can be applied, the effects of which are evident from the example below. Diffuse tranmission is calculated using function `cantransdif` in the microctools package:
+and `K` is effectively 1. In reality, the leaves of canopies are not black and do transmit and reflect radiation and a simple correction factor based on leaf reflectivity can be applied, the effects of which are evident from the example below. Diffuse transmission is calculated using function `cantransdif` in the microctools package:
 
 ```{r, fig.show='hold'}
 library(microctools)
@@ -263,10 +264,10 @@ plot(rad2 ~ sa, type = "l", col = "darkgreen", lwd = 2, xlab = "", ylab = "",
      ylim = c(0, 300))
 ```
 
-As can be seen, the transmission of radiation at high solar altitudes is much higher for vertically orientated leaves. Solar altitudefor a given location and date/time is computed using the `solalt` function. If the relative proportion of direct and diffuse radiation is unknown, it can be estimated using `difprop`. Combined direct and diffuse radiation transmission is computed using function `cansw`, which includes the option to automatically estimate the proportion o diffuse radiation if unknown. All these functions are in the microctools package.
+As can be seen, the transmission of radiation at high solar altitudes is much higher for vertically orientated leaves. Solar altitude for a given location and date/time is computed using the `solalt` function. If the relative proportion of direct and diffuse radiation is unknown, it can be estimated using `difprop`. Combined direct and diffuse radiation transmission is computed using function `cansw`, which includes the option to automatically estimate the proportion of diffuse radiation if unknown. All these functions are in the microctools package.
 
 ### Longwave radiation
-All objects emit temperature as a linear function of their absolute tmeperature to the power of 4. Above canopy, a proportion of emitted radiation is absorbed and then re-emitted by the sky. Underneath the canopy, emitted radiation is also absorbed and reimmited by the canopy. However, the portion absorbed and re-emmited by back downwards from the sky is also partially absorbed and re-emmited upwards by the canopy, so the net longwave radiation, i.e. emitted radiation less that received from the canopy and sky exhibits a more complex relationship with Plant Area Index, as can be seen in the example below in which net lognwave radiation is computed for a temperature of 11 degrees C under a range of sky emissivities using function `canlw` in the microctools package:   
+All objects emit temperature as a linear function of their absolute temperature to the power of 4. Above canopy, a proportion of emitted radiation is absorbed and then re-emitted by the sky. Underneath the canopy, emitted radiation is also absorbed and re-emitted by the canopy. However, the portion absorbed and re-emitted by back downwards from the sky is also partially absorbed and re-emitted upwards by the canopy, so the net longwave radiation, i.e. emitted radiation minus that received from the canopy and sky exhibits a more complex relationship with Plant Area Index, as can be seen in the example below in which net lognwave radiation is computed for a temperature of 11 degrees C under a range of sky emissivities using function `canlw` in the microctools package:   
 
 ```{r, fig.show='hold'}
 library(microctools)
@@ -434,12 +435,12 @@ plot(z ~ gs, type = "l", lwd = 2, col = "blue", xlab = "Stomatal conductance",
 The general equation that describes temperature relationships is:
 $H=g_H c_p(T_s-T_a)$
 
-where $g_H$ is molar conductance, $c_p$ is the molar specific heat capacity of the air, $T-S$ is the temperature of the surface and $T_a$ is the temperature of the air. Here H is the flux density of sensible heat, in the absence of metabolic effects given by $R_{net} - L - G$ where $R_{net}$ is net radiation, L is latent heat flux density and G is the flux density of heat to/from the ground. L and G are computed by the model, but for illustration an approximate relationship is $G = 0.1 R_{net}$ and $L = 0.3 R_{net}$ during the day and $G = 0.5 R_{net}$ and $L=0$ at night.
+where $g_H$ is molar conductance, $c_p$ is the molar specific heat capacity of the air, $T_S$ is the temperature of the surface and $T_a$ is the temperature of the air. Here $H$ is the flux density of sensible heat, in the absence of metabolic effects given by $R_{net} - L - G$ where $R_{net}$ is net radiation, $L$ is latent heat flux density and $G$ is the flux density of heat to/from the ground. $L$ and $G$ are computed by the model, but for illustration approximate relationships are $G = 0.1 R_{net}$ and $L = 0.3 R_{net}$ during the day and $G = 0.5 R_{net}$ and $L=0$ at night.
 
 ### Air temperature above canopy
 Above canopy temperatures can be computed using the `abovecanopytemp` function. A minor
 complication is that that the wind profile depends on a diabatic correction factor `psi_h`, 
-yet the calaculation of this relies on knowing the friction velocity `uf`, itself dependent
+yet the calculation of this relies on knowing the friction velocity `uf`, itself dependent
 on wind speed. In the model itself, the diabatic correction factor in the previous time-step is used, though as in the example below, it can be calculated easily by iteration. Below temperature profiles are shown for two wind speeds.
 
 ```{r, fig.show='hold'}
@@ -448,7 +449,7 @@ library(microclimc)
 # Calculate diabatic correction coefficient by iteration (High wind speed)
 H <- 800 # Sensible heat flux
 tair <- 11 # Temperature at 2 m
-u2 <- 5 # wind speed at two metrees
+u2 <- 5 # wind speed at 2 m
 hgt <- 1 # Height of canopy
 PAI <- 2 # Plant area index of canopy
 d <- zeroplanedis(hgt, PAI) 
@@ -488,7 +489,7 @@ plot(zo ~ tc, type = "l", lwd = 2, col = "red", xlab = "Temperature", ylab = "He
      xlim = c(11,25))
 ```
 
-It can clearly be seen that temperatures near the top the canopy are markedly greater when H is positive (the converse is true when H is negative). It is also evident that temperatures near the canopy surface are much greater under lower wind speeds owing to reduced thermal mixing. Since the flux gradients are non-linear due to increases in turbulence above ground, the temperature profiles are also non-linear. 
+It can clearly be seen that temperatures near the top the canopy are markedly greater when $H$ is positive (the converse is true when $H$ is negative). It is also evident that temperatures near the canopy surface are much greater under lower wind speeds owing to reduced thermal mixing. Since the flux gradients are non-linear due to increases in turbulence above ground, the temperature profiles are also non-linear. 
 
 ### Leaf and sub-canopy air temperature
 Here two options are considered. Firstly whether the leaf temperature is in steady state such that temperature is determined by the balance of heat fluxes. Alternatively, where heat storage is significant, transient fluxes are considered. The model automatically establishes which is appropriate based on conductivity and time step of the model.
@@ -517,7 +518,7 @@ $T_a^{j+1} = T_a^j + 0.5 \frac{\Delta T P_{AI}}{c_p \rho (1 - V_{den})} (g_{ref}
 where $\rho$ is the molar density of air. Here again, all values, with the exception of $T_a^j$ and $T_a^{j+1}$ represent means during the timestep. By asusming soil temperatures are fairly relatively stable over the relatively short time-steps of the model, such that soil temperature in the previous can be used, the equations above can be re-arranged and solved simultaniously for $T_a^{j+1}$ and $T_L^{j+1}$.  These calculations are performed for each canopy layer using the `leaftemp` function as in the example below:
 
 ```{r, fig.show='hold'}
-# Generate example paramaters for function (m = number of canopy layers, 
+# Generate example parameters for function (m = number of canopy layers, 
 # sm = number of soil layers:
 library(microctools)
 library(microclimc)
@@ -534,10 +535,10 @@ plot(z ~ ltemp$tleaf, type = "l", col = "darkgreen", lwd = 2,
      xlab = "Leaf temperature", ylab = "Height")
 ```
 
-Here the functions `paraminit` is a function used to generate list of parameters needed to run the model. It provides approximate parameters for use in the first time-step of the model, though these are later updated as the model proceeds. They are used here for ullustration only. The function `soilinit` returns the soil parameters needed to run the microclimate model for a given soil type. It can be seen that leaf temperatures are highest near the top of the canopy, where absorbed radiation is greatest. 
+Here the function `paraminit` is a function used to generate list of parameters needed to run the model. It provides approximate parameters for use in the first time-step of the model, though these are later updated as the model proceeds. They are used here for illustration only. The function `soilinit` returns the soil parameters needed to run the microclimate model for a given soil type. It can be seen that leaf temperatures are highest near the top of the canopy, where absorbed radiation is greatest. 
 
 ### Soil temperature
-Soil temperatures are calculate by dividing the into seperate soil layers, increasing in thickness at greater dpeths. The soil layer exhanges heat with the atmosphere, and the bottom layer is assumed to have a constant temperature, and exchange of heat between each layer $i$ is then governed by the following equation: 
+Soil temperatures are calculate by dividing the into seperate soil layers, increasing in thickness at greater depths. The soil layer exhanges heat with the atmosphere, and the bottom layer is assumed to have a constant temperature, and exchange of heat between each layer $i$ is then governed by the following equation: 
 
 $K_i(T_{i+1}-T_i)-K_{i-1}(T_i-T_{i-1})=C_h(T_i^{j+1}-T_i^j)\frac{Z_{i+1}-z_{i-1})}{2\Delta t}$
 
@@ -564,9 +565,9 @@ D_4
 $$
 where: $B_i = n (K_i+K_{i-1}) + C_h \frac {z_{i+1}-z_{i-1}}{2\Delta t}$, $A_{i+1}=C_i=-n K_i$ and $D_i = (1-n) K_{i-1} T_{i-1}^j+C_h \frac {z_{i+1}-z_{i-1}}{2\Delta t} - (1-n) (K_i + K_{i-1}) T_i^j+(1-n) K_i T_{i+1}^j$
 
-The above notation ignores radiative and latent heat exchange in the top surface soil layer, though in the model these are included. The coefficient matrix is symmetric and tridiagonal. The set of equations can thus be solved very efficiently using the Thomas algorithm using function `Thomas`. 
+The above notation ignores radiative and latent heat exchange in the top surface soil layer, though in the model these are included. The coefficient matrix is symmetric and tridiagonal. The set of equations can thus be solved very efficiently using the Thomas algorithm via the function `Thomas`. 
 
-Heat exchange between air layers is computed in a similar fashion, and indeed the entire below-canopy and below-soil layers are treated as a single set of layers and solved simultaniously. The weighting parameter f controls the forward or backward weighting. If f = 0, the flux is determined by the temperature difference at the beginning of the time step. If f = 0.5, the average of the old and new temperatures is used to compute heat flux. If f = 1, fluxes are computed using only the new temperatures. The best value to use for f is determined by considerations of numerical stability and accuracy and experimentation may be required. If f = 0 more heat transfer between nodes is predicted than would actually occur, and can therefore become unstable if time steps are too large. When f > 0.5, stable solutions will always be obtained, but heat flux will be underestimated. The best accuracy is obtained with f around 0.4, while best stability is at f = 1. A typical compromise is f = 0.6, and is he default used.
+Heat exchange between air layers is computed in a similar fashion, and indeed the entire below-canopy and below-soil layers are treated as a single set of layers and solved simultaniously. The weighting parameter f controls the forward or backward weighting. If f = 0, the flux is determined by the temperature difference at the beginning of the time step. If f = 0.5, the average of the old and new temperatures is used to compute heat flux. If f = 1, fluxes are computed using only the new temperatures. The best value to use for f is determined by considerations of numerical stability and accuracy and experimentation may be required. If f = 0 more heat transfer between nodes is predicted than would actually occur, and can therefore become unstable if time steps are too large. When f > 0.5, stable solutions will always be obtained, but heat flux will be underestimated. The best accuracy is obtained with f around 0.4, while best stability is at f = 1. A typical compromise is f = 0.6, and is the default used.
 
 ## Humidity and latent heat exchange
 Vapour exchange between air layers below the canopy are also computed using the Thomas algorithm, using function `ThomasV` Within each air layer, the vapour pressure of the air is computed (under steady-state) as follows:
@@ -582,11 +583,11 @@ $e_{ref}$ is the equivelent vapour pressure of the soil. It can be computed form
 ## Running the model
 
 ### One time step
-The full model is run over a single time-step using function `runonestep`. This is useful, if bespoke outputs, such as the temperature from multiple soil or canopy layers are needed. In the example below, initial soil parameters are derived from soil type using `soilinit`. Crude estimates of initial conditions are then generated using `paraminit`. The list of variables returned by `paraminit` is of the same format as the outputs from `runonestep`. The vegetation paramaters are derived form habitat type using `habitatvars`. A list of climate variables of the type normally available form standard weather stations is then created. The model is then run iteratively 100 times with outputs from `paraminit` replaced by those from `runonestep` so as to actual model the temperature profiles in the first time-step as opposed to jjust estimating them crudely. A temperature profile at the outset and after the running the model for 100 iterations are shown. 
+The full model is run over a single time-step using function `runonestep`. This is useful, if bespoke outputs, such as the temperature from multiple soil or canopy layers, are needed. In the example below, initial soil parameters are derived from soil type using `soilinit`. Crude estimates of initial conditions are then generated using `paraminit`. The list of variables returned by `paraminit` is of the same format as the outputs from `runonestep`. The vegetation parameters are derived from habitat type using `habitatvars`. A list of climate variables of the type normally available from standard weather stations is then created. The model is then run iteratively 100 times with outputs from `paraminit` replaced by those from `runonestep` so as to actually model the temperature profiles in the first time-step as opposed to just estimating them crudely. A temperature profile at the outset and after the running the model for 100 iterations are shown. 
 
 ```{r, fig.show='hold'}
 library(microclimc)
-# Create initail parameters
+# Create initial parameters
 tme <- as.POSIXlt(0, origin = "2020-05-04 12:00", tz = "GMT")
 previn <- paraminit(20, 10, 10, 15, 2, 80, 11, 500)
 vegp <- microctools::habitatvars(4, 50, -5, tme, m = 20)
@@ -594,16 +595,24 @@ z<-c((1:20)-0.5)/20*vegp$hgt
 soilp<- soilinit("Loam")
 climvars <- list(tair=16,relhum=90,pk=101.3,u=2.1,tsoil=11,skyem=0.9,Rsw=500,dp=NA)
 # Run model 100 times for current time step
-plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = i) 
+plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = "one run") 
 for (i in 1:100) previn <- runonestep(climvars, previn, vegp, soilp, 60, tme, 50, -5)
-plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = i)
+plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = paste(i, "runs"))
 ```
 
 It can be seen that the simple linear profile initial specified is replaced by a profile in which temperature is maximised ~3/4 of the way to the top of the canopy. Here the synergistic effects on temperature of greater leaf density, attenuated radiation and reduced wind speed are such that temperature is maximised.   
 
+If preferred, the outputs of `habitatvars` can be overwritten without harm, for instance here correcting canopy height to a measured local value:  
+
+```{r}
+vegp <- microctools::habitatvars(4, 50, -5, tme, m = 20)
+vegp$hgt <- 32.5
+
+```
+
 ### Model spin-up
 
-The above process of repeatedly running the model for the first time-step to establish initial conditions can also be achieved using the function `spinup` as in th example below. Here the example `weather` dataset include with the package is used in place of `climvars`. The function knows to select the first entry. 
+The above process of repeatedly running the model for the first time-step to establish initial conditions can also be achieved using the function `spinup` as in the example below. Here the example `weather` dataset included with the package is used in place of `climvars`. The function knows to select the first entry. 
 
 ```{r, fig.show='hold'}
 tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
@@ -616,9 +625,9 @@ modelout<-spinup(weather, vegp, soilp, lat = 50, long = -5, steps = 50)
 By leaving the input plotout at its default (TRUE) a soil, below-canopy and above-canopy air temperature profile (red) and leaf temperature profile (green) are plotted at the end.
 
 ### Running the model in time-steps
-To run the model of multiple timesteps the `runmodel` function is used. There are various ways in which data can be extracted for each time-step. If the input parameter `reqhgt` is set, and below the height of the canopy, the canopy node nearest to that height is set at the value specified. The returned values `tout` (air temperature), `tleaf` (leaf temperature), `relhum` (relative humidity), `L` (Latent heat flux) and `Swin` (Incoming shortwave) and Lwin (incoming - i.e. re-emitted lognwave) are then the values at that height. If `reqhgt` is above canopy, nodes are calculated automatically, and `tout` and `relhum` are the temperature and relative humidity at height `reqhgt`, `SWin` and `LWin` the values above canopy, `tleaf` the mean leaf temperature and `L` the summed latent heat exchange for the entire canopy. If `reqhgt` is negative, the soil node nearest to that height is set at the value specified, `tout` is soil temperature at that node, `tleaf`, `relhum`, `Swin` and `Lwin` are the mean values for the whole canopy. If `reqhgt` is not set, `tout`, `tleaf`, `relhum`, `SWin` and `LWin` are mean values for the whole canopy. 
+To run the model of multiple timesteps the `runmodel` function is used. There are various ways in which data can be extracted for each time-step. If the input parameter `reqhgt` is set, and below the height of the canopy, the canopy node nearest to that height is set at the value specified. The returned values `tout` (air temperature), `tleaf` (leaf temperature), `relhum` (relative humidity), `L` (Latent heat flux), `Swin` (Incoming shortwave) and Lwin (incoming - i.e. re-emitted lognwave) are then the values at that height. If `reqhgt` is above canopy, nodes are calculated automatically, and `tout` and `relhum` are the temperature and relative humidity at height `reqhgt`, `SWin` and `LWin` the values above canopy, `tleaf` the mean leaf temperature and `L` the summed latent heat exchange for the entire canopy. If `reqhgt` is negative, the soil node nearest to that height is set at the value specified, `tout` is soil temperature at that node, `tleaf`, `relhum`, `Swin` and `Lwin` are the mean values for the whole canopy. If `reqhgt` is not set, `tout`, `tleaf`, `relhum`, `SWin` and `LWin` are mean values for the whole canopy. 
 
-The start and end dates for running the model, and the time steps are automatically determined from input `climdata` data.frame, in this case the inbuilt `weather` dataset. User specified input datasets should use the same format and column names as `weather`. The `hourly_ncep` function in the microclima package is a function that retrieves climate forcing data needed to run the model for any location on earth. Outputs from this function can be reformated for use with the microclimc package using the function `hourlyncep_convert` in the  microctools package.  
+The start and end dates for running the model, and the time steps are automatically determined from input `climdata` data.frame, in this case the inbuilt `weather` dataset. User specified input datasets should use the same format and column names as `weather`. The `hourly_ncep` function in the microclima package is a function that retrieves climate forcing data needed to run the model for any location on earth. Outputs from this function can be reformatted for use with the microclimc package using the function `hourlyncep_convert` in the  microctools package.  
 
 ```{r eval=FALSE}
 library(microclimc)
@@ -645,5 +654,5 @@ plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0
 ![](images/plot1.png)\
 
 
-Here below canopy mean (at all heights) hourly air (red) and leaf (green) temperature for an entire are shown overlying reference air temperature at two metres height (grey).
+Here below canopy mean (at all heights) hourly air (red) and leaf (green) temperature for an entire year are shown overlying reference air temperature at two metres height (grey).
 
