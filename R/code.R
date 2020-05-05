@@ -29,7 +29,7 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @export
 leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw, vegem, skyem, dp = NA,
                    merid = round(long/15, 0) * 15, dst = 0, clump = 0) {
-  jd<-julday(tme = tme)
+  jd<-jday(tme = tme)
   lt<-tme$hour+tme$min/60+tme$sec/3600
   if (is.na(dp)) dp<-difprop(Rsw,jd,lt,lat,long,merid=merid,dst=dst)
   sa<-solalt(lt,lat,long,jd,merid=merid,dst=dst)
@@ -1011,6 +1011,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
   if (is.na(tsoil)) tsoil<-mean(climdata$temp, na.rm=T)
   dp <- climdata$difrad / climdata$swrad
   dp[is.na(dp)] <- 0.5
+  dp[climdata$swrad == 0] <- 0.5
   tout <- 0
   tleaf <- 0
   rh <- 0
