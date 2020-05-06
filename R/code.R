@@ -903,8 +903,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
   previn <- paraminit(m, sm, vegp$hgt, climdata$temp[1], climdata$windspeed[1], climdata$relhum[1],
                       tsoil, climdata$swrad[1])
   dp <- climdata$difrad[1] / climdata$swrad[1]
-  dp[is.na(dp)] <- 0.5
-  dp <- ifelse(climdata$swrad[1] == 0, 0.5, dp)
+  dp[!is.finite(dp)] <- 0.5
   climvars <- list(tair = climdata$temp[1], relhum = climdata$relhum[1], pk = climdata$pres[1],
                    u2 = climdata$windspeed[1], tsoil = tsoil, skyem = climdata$skyem[1],
                    Rsw = climdata$swrad[1], dp = dp)
@@ -1014,8 +1013,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
   }
   if (is.na(tsoil)) tsoil<-mean(climdata$temp, na.rm=T)
   dp <- climdata$difrad / climdata$swrad
-  dp[is.na(dp)] <- 0.5
-  dp[climdata$swrad == 0] <- 0.5
+  dp[!is.finite(dp)] <- 0.5
   tout <- 0
   tleaf <- 0
   rh <- 0
