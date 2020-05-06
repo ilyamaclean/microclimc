@@ -1029,7 +1029,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
     vegp2<-.vegpsort(vegp, i)
     previn <- runonestep(climvars,previn,vegp2,soilp,timestep,tme[i],lat,long,
                          edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n,metopen,windhgt)
-    if (i%%plotsteps == 0) plotresults(previn, vegp, climvars, i)
+    if (i%%plotsteps == 0 & plotout) plotresults(previn, vegp, climvars, i)
     if (is.na(reqhgt)) {
       tout[i] <- mean(previn$tc)
       tleaf[i] <- mean(previn$tleaf)
