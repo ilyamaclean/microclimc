@@ -231,11 +231,11 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' habitat (see details)
 #' @param uref wind at reference height (m) (see details)
 #' @param zref height (m) of `uref`
-#' @details if 'edgedist' not NA, then horizontal wind component is also added. Here,
-#' the wind profile of a reference grass surface (height = 0.12, Plant Area Index = 1.146)
-#' is calaculate, and at any given height `z` an attenuated wind speed inside thew canopy
-#' calculated, with the degree of attenuation determined by foliage density and distance
-#' from the edge. If the the attenuated horizontal wind speed exceeds the wind speed due
+#' @details if 'edgedist' is not NA, then horizontal wind component is also added. Here,
+#' the wind profile of a reference grass surface is calaculate, and at any given height `z`
+#' an attenuated wind speed inside thew canopy calculated, with the degree of attenuation
+#' determined by foliage density, distance from edge and the ratio of horizontal to vertical
+#' wind  speed. If the the attenuated horizontal wind speed exceeds the wind speed due
 #' to vertical attenuation, the horizontal wind speed is returned. The parameter `uref`
 #' represents the wind speed at height `zref` above the reference grass surface. If `edgedist`
 #' is set to NA (the default) the horizontal wind component and hence `uref` and `zref` are
@@ -246,20 +246,20 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' @examples
 #' # ==== Generate plant area index values
 #' m <- 100
-#' hgt <- 10
+#' hgt <- 5
 #' z<-c(1:m) * (hgt / m)
 #' PAI <- microctools::PAIgeometry(m, 3, 7, 70)
 #' plot(z~PAI, type = "l")
 #' cPAI <- cumsum(PAI)
-#' # ==== Calculate at top of canopy
+#' # ==== Calculate wind speed at top of canopy
 #' uref <- 2
 #' a <- microctools::attencoef(hgt, 3, 1)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 #' # === Calculate canopy profile (near edge)
 #' uz1 <- 0
 #' for (i in m:1) {
-#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
-#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
+#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
+#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
 #' }
 #' # === Calculate canopy profile (far from edge)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
@@ -282,8 +282,12 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
     ah <- attencoef(0.12, 1.146, 0.1, 0.02)
     uhr <- windprofile(uref, zref, z, ah, 1.146, 0.12)
     a2 <- attencoef(hgt, PAI, 1/x, lw, cd, iw, phi_m)
-    uhr <- uhr * exp(a2 * ((hgt - edgedist) / hgt - 1))
-    uz <- pmax(uz,uhr)
+    uwr<-suppressWarnings(2.5*log((z-0.08)/0.01476))
+    uwr[is.na(uwr)] <- 1
+    uwr[uwr<1]<-1
+    edr <- edgedist/uwr
+    uhr <- uhr * exp(a2 * ((hgt - edr) / hgt - 1))
+    uz <- pmax(uz,uhr,na.rm=T)
   }
   uz
 }

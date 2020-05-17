@@ -102,8 +102,8 @@ uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 # === Calculate canopy profile (near edge)
 uz1 <- 0
 for (i in m:1) {
-  uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
-  uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
+  uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
+  uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
 }
 # === Calculate canopy profile (far from edge)
 uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
@@ -163,7 +163,7 @@ Dead and live vegetation have markedly different reflective proportions and the 
 
 ```{r, fig.show='hold'}
 library(microctools)
-z<-c(1:100)/10
+z<-c(1:100)/100
 plot(z~LAIfrac(100,0.8, 5), type="l", ylim = c(0,1))
 plot(z~LAIfrac(100,0.8, 10), type="l", ylim = c(0,1))
 ```
@@ -476,7 +476,7 @@ PAI <- 2 # Plant area index of canopy
 d <- zeroplanedis(hgt, PAI) 
 zm <- roughlength(hgt, PAI)
 psi_m <- 0
-for (i in 1:10) {
+for (i in 1:50) {
   uf <- (0.4 * u2) / (log((2 - d) / zm) + psi_m[length(psi_m)])  # fraction velocity
   db <- diabatic_cor(tair, H = H, uf = uf, zi = 2, d = d) 
   psi_m <- c(psi_m, db$psi_m)
