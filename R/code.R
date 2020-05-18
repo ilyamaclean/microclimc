@@ -258,8 +258,8 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' # === Calculate canopy profile (near edge)
 #' uz1 <- 0
 #' for (i in m:1) {
-#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
-#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
+#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
+#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
 #' }
 #' # === Calculate canopy profile (far from edge)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
@@ -279,14 +279,12 @@ windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
   uz <- uh * exp(a * (z / hgt - 1))
   # horizontal wind component
   if (is.na(edgedist) == F) {
-    ah <- attencoef(0.12, 1.146, 0.1, 0.02)
-    uhr <- windprofile(uref, zref, z, ah, 1.146, 0.12)
     a2 <- attencoef(hgt, PAI, 1/x, lw, cd, iw, phi_m)
+    ur <- windprofile(uref, zref, z, 0.7989537, 1.146, 0.12)
     uwr<-suppressWarnings(2.5*log((z-0.08)/0.01476))
-    uwr[is.na(uwr)] <- 1
-    uwr[uwr<1]<-1
-    edr <- edgedist/uwr
-    uhr <- uhr * exp(a2 * ((hgt - edr) / hgt - 1))
+    uwr[uwr < 1] <- 1; uwr[is.na(uwr)] <- 1
+    edr <- (hgt - edgedist/uwr) / hgt
+    uhr <- ur * exp(a2 * (edr - 1))
     uz <- pmax(uz,uhr,na.rm=T)
   }
   uz

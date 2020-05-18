@@ -66,8 +66,8 @@ uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 # === Calculate canopy profile (near edge)
 uz1 <- 0
 for (i in m:1) {
-  uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
-  uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 15, uref = uref)
+  uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
+  uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
 }
 # === Calculate canopy profile (far from edge)
 uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
