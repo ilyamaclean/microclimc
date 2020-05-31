@@ -276,7 +276,7 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
                        iw = 0.5, phi_m  = 1, edgedist = NA, uref, zref = hgt + 2) {
   a <- attencoef(hgt, PAI, x, lw, cd, iw, phi_m)
-  uz <- uh * exp(a * (z / hgt - 1))
+  uz <- uh * exp(a * ((z / hgt) - 1))
   # horizontal wind component
   if (is.na(edgedist) == F) {
     a2 <- attencoef(hgt, PAI, 1/x, lw, cd, iw, phi_m)
@@ -581,7 +581,7 @@ paraminit <- function(m, sm, hgt, tair, u, relhum, tsoil, Rsw) {
 soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
   sel<-which(soilparams$Soil.type==soiltype)
   soilp<-soilparams[sel,]
-  z<-(sdepth/m^1.5)*c(1:m)^1.5
+  z<-(sdepth/m^1.2)*c(1:m)^1.2
   if (is.na(reqdepth) == F) z[abs(z-reqdepth)==min(abs(z-reqdepth))][1]<-reqdepth
   soilp<-as.list(soilp)
   soilp$z<-z
