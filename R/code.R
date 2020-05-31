@@ -477,7 +477,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   tleaf<-previn$tleaf+dTL
   # set limits
   sel<-which(tleaf>tn)
-  tmx<-rep(tair,length(tn[sel]))+20
+  tmx<-rep(tair,length(tn[sel]))+15
   tmx<-pmax(tmx,tleaf[sel])
   tn[sel]<-ifelse(tn[sel]>tmx,tmx,tn[sel])
   sel<-which(tleaf<tn)
