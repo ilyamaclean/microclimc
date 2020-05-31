@@ -474,8 +474,17 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
   # Check whether saturated
   tn<-aL+bL*dTL
-  tn<-ifelse(tn>tair+15,tair+15,tn)
-  tn<-ifelse(tn<tair-5,tair-5,tn)
+  tleaf<-previn$tleaf+dTL
+  # set limits
+  sel<-which(tleaf>tn)
+  tmx<-rep(tair,length(tn[sel]))+20
+  tmx<-pmax(tmx,tleaf[sel])
+  tn[sel]<-ifelse(tn[sel]>tmx,tmx,tn[sel])
+  sel<-which(tleaf<tn)
+  tmn<-rep(tair,length(tn[sel]))-5
+  tmn<-pmin(tmx,tleaf[sel])
+  tn[sel]<-ifelse(tn[sel]<tmn,tmn,tn[sel])
+  # check whether saturated
   eam<-ae+be*dTL
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
