@@ -116,6 +116,10 @@ Thomas <- function(tc, tmsoil, tair, k, cd, f = 0.6, X = 0) {
   for (i in m:2) {
     tn[i]<-d[i]-cc[i]*tn[i+1]
   }
+  xmn<-pmin(tc[xx],tc[xx-1],tc[xx+1])
+  xmx<-pmax(tc[xx],tc[xx-1],tc[xx+1])
+  tn[xx]<-ifelse(tn[xx]<xmn,xmn,tn[xx])
+  tn[xx]<-ifelse(tn[xx]>xmx,xmx,tn[xx])
   tn[xx]<-tn[xx]+f*X
   tn
 }
@@ -470,6 +474,8 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
   # Check whether saturated
   tn<-aL+bL*dTL
+  tn<-ifelse(tn>tair+15,tair+15,tn)
+  tn<-ifelse(tn<tair-5,tair-5,tn)
   eam<-ae+be*dTL
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
