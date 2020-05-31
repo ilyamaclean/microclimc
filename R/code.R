@@ -463,6 +463,11 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   dTL2<-(Rabs-aR-aX-aH)/(bR+bX+bH)
   sel<-which(abs(dTL2)<abs(dTL))
   dTL[sel]<-dTL2[sel]
+  # Set limits to leaf temperature
+  dTmx <- previn$tc + 20.2 - previn$tleaf
+  dTmn <- previn$tc - 4.5 - previn$tleaf
+  dTL[dTL>dTmx] <- dTmx
+  dTL[dTL<dTmn] <- dTmn
   # Check whether saturated
   tn<-aL+bL*dTL
   eam<-ae+be*dTL
@@ -642,7 +647,7 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #'   plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = i)
 #'   previn <- runonestep(climvars, previn, vegp, soilp, 60, tme, 50, -5)
 #' }
-runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 100,
+runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 1000,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                        dst = 0, n = 0.6, metopen = TRUE, windhgt = 2) {
   # =============   Unpack climate variables ========== #
