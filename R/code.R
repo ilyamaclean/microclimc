@@ -484,7 +484,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   tmn<-rep(tair,length(tn[sel]))-5
   tmn<-pmin(tmn,tleaf[sel])
   tn[sel]<-ifelse(tn[sel]<tmn,tmn,tn[sel])
-  # check whether saturated
+  # check whether saturated or not
   eam<-ae+be*dTL
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
