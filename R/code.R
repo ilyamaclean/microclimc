@@ -466,8 +466,8 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Set limits to leaf temperature
   dTmx <- previn$tc + 20.2 - previn$tleaf
   dTmn <- previn$tc - 4.5 - previn$tleaf
-  dTL[dTL>dTmx] <- dTmx
-  dTL[dTL<dTmn] <- dTmn
+  dTL[dTL>dTmx] <- dTmx[dTL>dTmx]
+  dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
   # Check whether saturated
   tn<-aL+bL*dTL
   eam<-ae+be*dTL
