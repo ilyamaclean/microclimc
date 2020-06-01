@@ -703,8 +703,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
   # Set limits to tcan
-  tcan<-ifelse(tcan>(tair+20),(tair+20),tcan)
-  tcan<-ifelse(tcan<(tair-15),(tair-15),tcan)
+  tcan<-ifelse(tcan>(tair+15),(tair+15),tcan)
+  tcan<-ifelse(tcan<(tair-4.5),(tair-4.5),tcan)
   # Adjust relative humidity
   ea<-0.6108*exp(17.27*tair/(tair+237.3))*(relhum/100)
   eas<-0.6108*exp(17.27*tcan/(tcan+237.3))
