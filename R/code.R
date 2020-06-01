@@ -432,19 +432,14 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   cp<-cpair(previn$tc)
   vden<-vegp$thickw*vegp$PAI
   ma<-(timestep*PAIm)/(cp*ph*(1-vden))
-  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp/zla;
-  K4<-(lambda*gv)/(zla*mpk); K5<-(lambda*gtt2)/(z*mpk)
+  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp/zla
   btm<-1+0.5*ma*(K1+K2+K3)
-  aL<-(previn$tc+0.5*ma*(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf+K4*edf(estl,ae2,previn$tc)+
-                           K5*edf(esoil,ae3,previn$tc)))/btm
-  bL<-ma*(0.25*K3+0.25*K4*delta-0.5*be*(K4+K5))/btm
+  aL<-(previn$tc+0.5*ma*(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf))/btm
+  bL<-(0.25*ma*K3)/btm
   # ~Steady state
   K1<-gtt[sel]*cp[sel]; K2<-gtt2[sel]*cp[sel]; K3<-gha[sel]*cp[sel]
-  K4<-lambda*gv[sel]/mpk; K5<-lambda*gtt2[sel]/mpk
-  aL[sel]<-(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf[sel]+
-              K4*edf(estl[sel],ae2[sel],previn$tc[sel])+
-              K5*edf(esoil,ae3[sel],previn$tc[sel]))/(K1+K2+K3)
-  bL[sel]<-(0.5*(K3+K4*delta[sel]-be[sel]*(K4+K5)))/(K1+K2+K3)
+  aL[sel]<-(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf[sel])/(K1+K2+K3)
+  bL[sel]<-(0.5*K3)/(K1+K2+K3)
   bL<-ifelse(bL<0,0,bL)
   # Sensible Heat
   aH<-cp*gha*(previn$tleaf-aL)
