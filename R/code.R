@@ -674,7 +674,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Adjust wind to 2 m above canopy
   if (metopen) {
     if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
-    u2<-u*log(67.8*hgt-5.42)/log(67.8*(hgt+2)-5.42)
+    u2<-u*log(67.8*(hgt+2)-5.42)/log(67.8*2-5.42)
   } else {
     u2 <- u
     if (windhgt != (2+hgt)) u2 <- windprofile(u, windhgt, hgt+2, a = 2, sum(vegp$PAI), hgt, previn$psi_m)
