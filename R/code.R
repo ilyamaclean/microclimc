@@ -201,6 +201,7 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
   uf <- 0.4 * (ui / ln1)
   # zo above canopy
   ln2 <- suppressWarnings(log((zo - d) / zm) + psi_m)
+  ln2[ln2<0.55]<-0.55
   uo <- (uf / 0.4) * ln2
   # zo below canopy
   sel <- which(zo < hgt)
