@@ -376,6 +376,7 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' plot(z ~ ltemp$tleaf, type = "l", xlab = "Leaf temperature", ylab = "Height")
 leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp, theta) {
   edf<-function(ea1,ea2,tc) {
+    tk<-tc+273.15
     es<-0.6108*exp(17.27*tc/(tc+237.3))
     y<-ifelse(ea1>ea2,ea1-ea2,0)
     y<-ifelse(ea2>es,0,y)
@@ -422,7 +423,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   ae[sel]<-ae2[sel]
   be[sel]<-be2[sel]
   # Air temperature
-  PAIm<-vegp$PAI/zth
+  PAIm<-2*vegp$PAI/zth
   # Test whether steady state
   test<-pmax(timestep*gtt/zref,timestep*gha/zla,timestep*gtt2/z)
   # ~Transient
@@ -432,8 +433,8 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   ph<-phair(previn$tc,previn$pk)
   cp<-cpair(previn$tc)
   vden<-vegp$thickw*vegp$PAI
-  ma<-(timestep*PAIm)/(cp*ph*(1-vden))
-  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp/zla
+  ma<-(timestep*PAIm*2)/(cp*ph*(1-vden))
+  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp*PAIm/zla
   btm<-1+0.5*ma*(K1+K2+K3)
   aL<-(previn$tc+0.5*ma*(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf))/btm
   bL<-(0.25*ma*K3)/btm
@@ -457,21 +458,13 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   bR<-vegp$vegem*sb*2*(previn$tleaf+273.15)^3
   # Leaf temperature
   Ch<-vden*vegp$cpw*vegp$phw
-  ml<-timestep*PAIm/Ch
+  ml<-(timestep*PAIm)/Ch
   dTL<-(ml*(Rabs-aR-aX-aH))/(zla+ml*(bR+bX+bH))
   # check whether steady state
   dTL2<-(Rabs-aR-aX-aH)/(bR+bX+bH)
   sel<-which(abs(dTL2)<abs(dTL))
   dTL[sel]<-dTL2[sel]
-  # Set limits to leaf temperature
-  dTmx <- previn$tc + 20.2 - previn$tleaf
-  dTmn <- previn$tc - 4.5 - previn$tleaf
-  dTL[dTL>dTmx] <- dTmx[dTL>dTmx]
-  dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
-  # Check whether saturated
-  tn<-aL+bL*dTL
-  tleaf<-previn$tleaf+dTL
-  # set limits
+  # set limits to air temperature
   sel<-which(tleaf>tn)
   tmx<-rep(tair,length(tn[sel]))+15
   tmx<-pmax(tmx,tleaf[sel])
@@ -485,6 +478,26 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   ean<-ifelse(ean>es,es,ean)
+  # Dew point temperature
+  tleaf<-previn$tleaf+dTL
+  a<-log(ean/0.6108)
+  Tdew<- -(237.3*a)/(a-17.27)
+  dT1 <- -(previn$tleaf+dTL - Tdew)
+  dT1 <- ifelse(dT1<0,0,dT1)
+  estl <- 0.6108*exp(17.27*tleaf/(tleaf+237.3))
+  Lc <- lambda * gv * (estl - ean) / mpk
+  dT2 <- -(ml/zla)*Lc
+  dT2 <- ifelse(dT2 < 0, 0, dT2)
+  dT <- pmin(dT1,dT2)
+  tleaf<-tleaf+dT
+  dTL<-tleaf-previn$tleaf
+  # Set limits to leaf temperature
+  dTmx <- previn$tc + 20.2 - previn$tleaf
+  dTmn <- previn$tc - 4.5 - previn$tleaf
+  dTL[dTL>dTmx] <- dTmx[dTL>dTmx]
+  dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
+  tn<-aL+bL*dTL
+  tleaf<-previn$tleaf+dTL
   return(list(tn=tn, tleaf=previn$tleaf+dTL, ea=ean, gtt=gtt, Rem=aR+bR*dTL,
               H=aH+bH*dTL, L=aX+bX*dTL, esoil = esoil))
 }
