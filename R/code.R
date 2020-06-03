@@ -468,6 +468,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   sel<-which(abs(dTL2)<abs(dTL))
   dTL[sel]<-dTL2[sel]
   # set limits to air temperature
+  tleaf<-previn$tleaf+dTL
   sel<-which(tleaf>tn)
   tmx<-rep(tair,length(tn[sel]))+15
   tmx<-pmax(tmx,tleaf[sel])
@@ -482,7 +483,6 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   ean<-ifelse(ean>es,es,ean)
   # Dew point temperature
-  tleaf<-previn$tleaf+dTL
   a<-log(ean/0.6108)
   Tdew<- -(237.3*a)/(a-17.27)
   dT1 <- -(previn$tleaf+dTL - Tdew)
