@@ -468,6 +468,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   sel<-which(abs(dTL2)<abs(dTL))
   dTL[sel]<-dTL2[sel]
   # set limits to air temperature
+  tn<-aL+bL*dTL
   tleaf<-previn$tleaf+dTL
   sel<-which(tleaf>tn)
   tmx<-rep(tair,length(tn[sel]))+15
