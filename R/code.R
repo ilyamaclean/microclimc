@@ -348,6 +348,9 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' @param vegp list of vegetation paramaters (see e.g. `vegparams` dataset)
 #' @param soilp list Soil paramaters (see e.g. `soilparams` dataset)
 #' @param theta volumetric soil moisture fraction of top soil layer (m^3 / m^3)
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
 #'
 #' @return a list with the following elements:
 #' @return `tn` air temperature of each layer (deg C)
@@ -374,7 +377,7 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' ltemp <- leaftemp(11, 80, 101.3, 60, previn$gt, previn$gha, previn$gv, previn$Rabs, previn,
 #'                   vegp, soilp, 0.3)
 #' plot(z ~ ltemp$tleaf, type = "l", xlab = "Leaf temperature", ylab = "Height")
-leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp, theta) {
+leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp, theta, zlafact = 1) {
   edf<-function(ea1,ea2,tc) {
     tk<-tc+273.15
     es<-0.6108*exp(17.27*tc/(tc+237.3))
@@ -387,7 +390,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Sort out thicknesses
   m<-length(gt)-1
   zth<-c(z[2:m]-z[1:(m-1)],vegp$hgt-(z[m]+z[m-1])/2)
-  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5
+  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5*zlafact
   # Sort out conductivitites
   gt<-0.5*gt+0.5*previn$gt
   gv<-0.5*gv+0.5*previn$gv
@@ -641,6 +644,9 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' for which temperatures are modelled (FALSE - see details)
 #' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
 #' canopy.
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
 #' @return a list of of model outputs for the current timestep with the same format as `previn`
 #' @import microctools
 #' @export
@@ -673,7 +679,7 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' }
 runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 1000,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2) {
+                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1) {
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
   tair<-climvars$tair; relhum<-climvars$relhum; pk<-climvars$pk; u<-climvars$u
@@ -757,7 +763,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Leaf conductivity
   dtc<-previn$tleaf-previn$tc
   gha<-1.41*gforcedfree(vegp$lw*0.71,uz,tc,dtc,pk)
-  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta)
+  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta,zlafact)
   eaj<-0.6108*exp(17.27*tc/(tc+237.3))*(previn$rh/100)
   Vo<-eaj/previn$pk
   # =============== Soil conductivity =========== #
@@ -767,7 +773,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # conductivity and specific heat
   vden<-(vegp$PAI*vegp$thickw)
   mult<-1-vden
-  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)*0.5
+  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)*0.5*zlafact
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
