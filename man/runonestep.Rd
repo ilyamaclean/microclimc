@@ -7,7 +7,7 @@
 runonestep(climvars, previn, vegp, soilp, timestep, tme, lat, long,
   edgedist = 1000, sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3,
   thetap = 0.3, merid = 0, dst = 0, n = 0.6, metopen = TRUE,
-  windhgt = 2)
+  windhgt = 2, zlafact = 1)
 }
 \arguments{
 \item{climvars}{a of climate variables needed to run the run the model for one timestep (see dataset \code{\link[=climvars]{climvars()}})}
@@ -50,6 +50,10 @@ for which temperatures are modelled (FALSE - see details)}
 
 \item{windhgt}{height above ground of wind measurement. If \code{metopen} is FALSE, must be above
 canopy.}
+
+\item{zlafact}{numeric value indicating how close to leaves air temperatures are
+needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+Must be greater than 1.}
 }
 \value{
 a list of of model outputs for the current timestep with the same format as \code{previn}
