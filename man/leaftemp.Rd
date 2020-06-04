@@ -5,7 +5,7 @@
 \title{Calculates leaf temperature of canopy layers}
 \usage{
 leaftemp(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp,
-  soilp, theta, zlafact = 1)
+  soilp, theta, zlafact = 1, lrhf = 1)
 }
 \arguments{
 \item{tair}{air temperature at two metres above canopy (deg C)}
@@ -35,6 +35,8 @@ leaftemp(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp,
 \item{zlafact}{numeric value indicating how close to leaves air temperatures are
 needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 Must be greater than 1.}
+
+\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
 }
 \value{
 a list with the following elements:

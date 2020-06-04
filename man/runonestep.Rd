@@ -7,7 +7,7 @@
 runonestep(climvars, previn, vegp, soilp, timestep, tme, lat, long,
   edgedist = 1000, sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3,
   thetap = 0.3, merid = 0, dst = 0, n = 0.6, metopen = TRUE,
-  windhgt = 2, zlafact = 1)
+  windhgt = 2, zlafact = 1, lrhf = 1)
 }
 \arguments{
 \item{climvars}{a of climate variables needed to run the run the model for one timestep (see dataset \code{\link[=climvars]{climvars()}})}
@@ -54,6 +54,8 @@ canopy.}
 \item{zlafact}{numeric value indicating how close to leaves air temperatures are
 needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 Must be greater than 1.}
+
+\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
 }
 \value{
 a list of of model outputs for the current timestep with the same format as \code{previn}

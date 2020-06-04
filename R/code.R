@@ -417,18 +417,19 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   rhsoil<-soilrh(theta,soilp$b,-soilp$psi_e,soilp$Smax, previn$soiltc[1])
   esoil<-rhsoil*0.6108*exp(17.27*previn$soiltc[1]/(previn$soiltc[1]+237.3))
   # Test whether steady state
+  PAIm<-2*vegp$PAI/zth
+  gv2<-(PAIm/zth)*gv
   test<-pmax(timestep*gtt/zref,timestep*gv/zla,timestep*gtt2/z)
   sel<-which(test>1)
   btm<-(1/timestep)+0.5*(gtt/zref+gtt2/z+gv/zla)
   ae<-eaj+0.5*((gtt/zref)*edf(eref,eaj,previn$tc)+(gtt2/z)*edf(esoil,eaj,previn$tc)+
                  (gv/zla)*edf(estl,eaj,previn$tc))/btm
   be<-(0.25*gv*delta)/btm
-  ae2<-(gtt*eref+gtt2*esoil+gv*estl)/(gtt+gtt2+gv)
-  be2<-(0.5*delta)/(gtt+gtt2+gv)
+  ae2<-(gtt*eref+gtt2*esoil+gv2*estl)/(gtt+gtt2+gv2)
+  be2<-(0.5*delta)/(gtt+gtt2+gv2)
   ae[sel]<-ae2[sel]
   be[sel]<-be2[sel]
   # Air temperature
-  PAIm<-2*vegp$PAI/zth
   # Test whether steady state
   test<-pmax(timestep*gtt/zref,timestep*gha/zla,timestep*gtt2/z)
   # ~Transient
@@ -1043,15 +1044,15 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' dataout <- runmodel(weather, vegp, soilp, lat = 50, long = -5)
 #' par(mfrow=c(2,1))
 #' plot(tout~as.POSIXct(obs_time), data = dataout, type = "l", col = "red",
-#'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
+#'      xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
 #' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-#'      xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
+#'      xlab = "", ylab = "Temperature", ylim = c(-8.5, 27.5), main = "Air temperature")
 #' plot(tleaf~as.POSIXct(obs_time), data = dataout, type = "l", col = "darkgreen",
-#'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
+#'      xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
 #' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-#'     xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
+#'     xlab = "", ylab = "", ylim = c(-8.5, 27.5), main = "Leaf temperature")
 runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                      sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                      dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
