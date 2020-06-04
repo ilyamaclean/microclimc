@@ -483,6 +483,9 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   ean<-ifelse(ean>es,es,ean)
+  # Calculate minimum potential vapour pressure
+  eamn <- (relhum/100)*0.6108*exp(17.27*tair/(tair+237.3))
+  ean<-ifelse(ean<eamn,eamn,ean)
   # Dew point temperature
   a<-log(ean/0.6108)
   Tdew<- -(237.3*a)/(a-17.27)
