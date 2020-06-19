@@ -7,7 +7,7 @@
 runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
   sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
   dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-  tsoil = NA, metopen = TRUE, windhgt = 2)
+  tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables (see e.g. \code{weather})}
@@ -53,6 +53,12 @@ for which temperatures are modelled (FALSE - see details)}
 
 \item{windhgt}{height above ground of wind measurement. If \code{metopen} is FALSE, must be above
 canopy.}
+
+\item{zlafact}{numeric value indicating how close to leaves air temperatures are
+needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+Must be greater than 1.}
+
+\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
 }
 \value{
 a data.frame with the following elements:
@@ -110,13 +116,13 @@ soilp<- soilinit("Loam")
 dataout <- runmodel(weather, vegp, soilp, lat = 50, long = -5)
 par(mfrow=c(2,1))
 plot(tout~as.POSIXct(obs_time), data = dataout, type = "l", col = "red",
-     xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-par(new=T)
+     xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
+par(new=TRUE)
 plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-     xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
+     xlab = "", ylab = "Temperature", ylim = c(-8.5, 27.5), main = "Air temperature")
 plot(tleaf~as.POSIXct(obs_time), data = dataout, type = "l", col = "darkgreen",
-     xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-par(new=T)
+     xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
+par(new=TRUE)
 plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-    xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
+    xlab = "", ylab = "", ylim = c(-8.5, 27.5), main = "Leaf temperature")
 }

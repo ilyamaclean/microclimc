@@ -9,11 +9,12 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @param tground ground temperature (deg C)
 #' @param lat latitude (decimal degrees)
 #' @param long longitude (decimal degrees)
-#' @param PAIc Vector of cumulative plant area indices for each canopy layer
+#' @param PAI Vector of plant area indices for each canopy layer
 #' @param pLAI Proportion of plant area that is green vegetation
 #' @param x the ratio of vertical to horizontal projections of leaf foliage
 #' @param refls reflectivity of green vegetation to shortwave radiation
 #' @param refw reflectivity of woody vegetation to shortwave radiation
+#' @param refg reflectivity of ground to shortwave radiation
 #' @param vegem emissivity of vegetation
 #' @param skyem sky emissivity
 #' @param dp proportion of `Rsw` that is diffuse radiation. If not provided, then calculated using [microctools::difprop()]
@@ -27,9 +28,11 @@ globalVariables(c("soilparams", "climvars", "weather"))
 #' @return `ref` mean area-wighted reflectivity of vegetation (green and woody)
 #' @import microctools
 #' @export
-leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw, vegem, skyem, dp = NA,
+leafabs <-function(Rsw, tme, tair, tground, lat, long, PAI, pLAI, x, refls, refw, refg, vegem, skyem, dp = NA,
                    merid = round(long/15, 0) * 15, dst = 0, clump = 0) {
-  jd<-julday(tme = tme)
+  PAIc <- rev(cumsum(PAI))
+  PAIg <- cumsum(PAI)
+  jd<-jday(tme = tme)
   lt<-tme$hour+tme$min/60+tme$sec/3600
   if (is.na(dp)) dp<-difprop(Rsw,jd,lt,lat,long,merid=merid,dst=dst)
   sa<-solalt(lt,lat,long,jd,merid=merid,dst=dst)
@@ -38,11 +41,12 @@ leafabs <-function(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, ref
   sunl<-psunlit(PAIc,x,sa,clump)
   mul<-radmult(x,sa2)
   aRsw <- (1-ref) * cansw(Rsw,dp,jd,lt,lat,long,PAIc,x,ref,merid=merid,dst=dst,clump=clump)
-  aRsw <- sunl * mul * aRsw + (1-sunl) * aRsw
+  aGround <- refg * cansw(Rsw,dp,jd,lt,lat,long,sum(PAI),x,mean(ref),merid=merid,dst=dst,clump=clump)
+  aGround <- (1-ref) * cansw(aGround,dp,jd,lt,lat,long,PAIg,x,ref,merid=merid,dst=dst,clump=clump)
+  aRsw <- sunl * mul * aRsw + (1-sunl) * aRsw + aGround
   aRlw <- canlw(tair, PAIc, 1-vegem, skyem = skyem, clump = clump)$lwabs
   return(list(aRsw=aRsw, aRlw=aRlw, ref=ref))
 }
-
 #' Calculates radiation emitted by leaf
 #'
 #' @description Calculates the flux density of radiation emitted by the leaf.
@@ -112,6 +116,10 @@ Thomas <- function(tc, tmsoil, tair, k, cd, f = 0.6, X = 0) {
   for (i in m:2) {
     tn[i]<-d[i]-cc[i]*tn[i+1]
   }
+  xmn<-pmin(tc[xx],tc[xx-1],tc[xx+1])
+  xmx<-pmax(tc[xx],tc[xx-1],tc[xx+1])
+  tn[xx]<-ifelse(tn[xx]<xmn,xmn,tn[xx])
+  tn[xx]<-ifelse(tn[xx]>xmx,xmx,tn[xx])
   tn[xx]<-tn[xx]+f*X
   tn
 }
@@ -193,6 +201,7 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
   uf <- 0.4 * (ui / ln1)
   # zo above canopy
   ln2 <- suppressWarnings(log((zo - d) / zm) + psi_m)
+  ln2[ln2<0.55]<-0.55
   uo <- (uf / 0.4) * ln2
   # zo below canopy
   sel <- which(zo < hgt)
@@ -227,11 +236,11 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' habitat (see details)
 #' @param uref wind at reference height (m) (see details)
 #' @param zref height (m) of `uref`
-#' @details if 'edgedist' not NA, then horizontal wind component is also added. Here,
-#' the wind profile of a reference grass surface (height = 0.12, Plant Area Index = 1.146)
-#' is calaculate, and at any given height `z` an attenuated wind speed inside thew canopy
-#' calculated, with the degree of attenuation determined by foliage density and distance
-#' from the edge. If the the attenuated horizontal wind speed exceeds the wind speed due
+#' @details if 'edgedist' is not NA, then horizontal wind component is also added. Here,
+#' the wind profile of a reference grass surface is calaculate, and at any given height `z`
+#' an attenuated wind speed inside thew canopy calculated, with the degree of attenuation
+#' determined by foliage density, distance from edge and the ratio of horizontal to vertical
+#' wind  speed. If the the attenuated horizontal wind speed exceeds the wind speed due
 #' to vertical attenuation, the horizontal wind speed is returned. The parameter `uref`
 #' represents the wind speed at height `zref` above the reference grass surface. If `edgedist`
 #' is set to NA (the default) the horizontal wind component and hence `uref` and `zref` are
@@ -242,20 +251,20 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' @examples
 #' # ==== Generate plant area index values
 #' m <- 100
-#' hgt <- 10
+#' hgt <- 5
 #' z<-c(1:m) * (hgt / m)
 #' PAI <- microctools::PAIgeometry(m, 3, 7, 70)
 #' plot(z~PAI, type = "l")
 #' cPAI <- cumsum(PAI)
-#' # ==== Calculate at top of canopy
+#' # ==== Calculate wind speed at top of canopy
 #' uref <- 2
 #' a <- microctools::attencoef(hgt, 3, 1)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 #' # === Calculate canopy profile (near edge)
 #' uz1 <- 0
 #' for (i in m:1) {
-#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
-#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 5, uref = uref)
+#'   uz1[i] <- windcanopy(uh, z[i], z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
+#'   uh <- windcanopy(uh, z[i] - 0.05, z[i] + 0.05, cPAI[i], edgedist = 20, uref = uref)
 #' }
 #' # === Calculate canopy profile (far from edge)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
@@ -272,14 +281,16 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
                        iw = 0.5, phi_m  = 1, edgedist = NA, uref, zref = hgt + 2) {
   a <- attencoef(hgt, PAI, x, lw, cd, iw, phi_m)
-  uz <- uh * exp(a * (z / hgt - 1))
+  uz <- uh * exp(a * ((z / hgt) - 1))
   # horizontal wind component
   if (is.na(edgedist) == F) {
-    ah <- attencoef(0.12, 1.146, 0.1, 0.02)
-    uhr <- windprofile(uref, zref, z, ah, 1.146, 0.12)
     a2 <- attencoef(hgt, PAI, 1/x, lw, cd, iw, phi_m)
-    uhr <- uhr * exp(a2 * ((hgt - edgedist) / hgt - 1))
-    uz <- pmax(uz,uhr)
+    ur <- windprofile(uref, zref, z, 0.7989537, 1.146, 0.12)
+    uwr<-suppressWarnings(2.5*log((z-0.08)/0.01476))
+    uwr[uwr < 1] <- 1; uwr[is.na(uwr)] <- 1
+    edr <- (hgt - edgedist/uwr) / hgt
+    uhr <- ur * exp(a2 * (edr - 1))
+    uz <- pmax(uz,uhr,na.rm=T)
   }
   uz
 }
@@ -337,6 +348,10 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' @param vegp list of vegetation paramaters (see e.g. `vegparams` dataset)
 #' @param soilp list Soil paramaters (see e.g. `soilparams` dataset)
 #' @param theta volumetric soil moisture fraction of top soil layer (m^3 / m^3)
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
+#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
 #'
 #' @return a list with the following elements:
 #' @return `tn` air temperature of each layer (deg C)
@@ -363,8 +378,10 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' ltemp <- leaftemp(11, 80, 101.3, 60, previn$gt, previn$gha, previn$gv, previn$Rabs, previn,
 #'                   vegp, soilp, 0.3)
 #' plot(z ~ ltemp$tleaf, type = "l", xlab = "Leaf temperature", ylab = "Height")
-leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp, theta) {
+leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp,
+                     theta, zlafact = 1, lrhf = 1) {
   edf<-function(ea1,ea2,tc) {
+    tk<-tc+273.15
     es<-0.6108*exp(17.27*tc/(tc+237.3))
     y<-ifelse(ea1>ea2,ea1-ea2,0)
     y<-ifelse(ea2>es,0,y)
@@ -375,7 +392,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Sort out thicknesses
   m<-length(gt)-1
   zth<-c(z[2:m]-z[1:(m-1)],vegp$hgt-(z[m]+z[m-1])/2)
-  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)
+  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5*zlafact
   # Sort out conductivitites
   gt<-0.5*gt+0.5*previn$gt
   gv<-0.5*gv+0.5*previn$gv
@@ -393,25 +410,26 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Vapour pressure
   esj<-0.6108*exp(17.27*previn$tc/(previn$tc+237.3))
   eaj<-(previn$rh/100)*esj
-  estl<-0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3))
+  estl<-0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3))*lrhf
   esref<-0.6108*exp(17.27*mtref/(mtref+237.3))
   eref<-(mrh/100)*esref
   delta <- 4098*(0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3)))/(previn$tleaf+237.3)^2
   rhsoil<-soilrh(theta,soilp$b,-soilp$psi_e,soilp$Smax, previn$soiltc[1])
   esoil<-rhsoil*0.6108*exp(17.27*previn$soiltc[1]/(previn$soiltc[1]+237.3))
   # Test whether steady state
+  PAIm<-2*vegp$PAI/zth
+  gv2<-(PAIm/zth)*gv
   test<-pmax(timestep*gtt/zref,timestep*gv/zla,timestep*gtt2/z)
   sel<-which(test>1)
   btm<-(1/timestep)+0.5*(gtt/zref+gtt2/z+gv/zla)
   ae<-eaj+0.5*((gtt/zref)*edf(eref,eaj,previn$tc)+(gtt2/z)*edf(esoil,eaj,previn$tc)+
                  (gv/zla)*edf(estl,eaj,previn$tc))/btm
   be<-(0.25*gv*delta)/btm
-  ae2<-(gtt*eref+gtt2*esoil+gv*estl)/(gtt+gtt2+gv)
-  be2<-(0.5*delta)/(gtt+gtt2+gv)
+  ae2<-(gtt*eref+gtt2*esoil+gv2*estl)/(gtt+gtt2+gv2)
+  be2<-(0.5*delta)/(gtt+gtt2+gv2)
   ae[sel]<-ae2[sel]
   be[sel]<-be2[sel]
   # Air temperature
-  PAIm<-vegp$PAI/zth
   # Test whether steady state
   test<-pmax(timestep*gtt/zref,timestep*gha/zla,timestep*gtt2/z)
   # ~Transient
@@ -421,20 +439,15 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   ph<-phair(previn$tc,previn$pk)
   cp<-cpair(previn$tc)
   vden<-vegp$thickw*vegp$PAI
-  ma<-(timestep*PAIm)/(cp*ph*(1-vden))
-  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp/zla;
-  K4<-(lambda*gv)/(zla*mpk); K5<-(lambda*gtt2)/(z*mpk)
+  ma<-(timestep*PAIm*2)/(cp*ph*(1-vden))
+  K1<-gtt*cp/zref; K2<-gtt2*cp/z; K3<-gha*cp*PAIm/zla
   btm<-1+0.5*ma*(K1+K2+K3)
-  aL<-(previn$tc+0.5*ma*(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf+K4*edf(estl,ae2,previn$tc)+
-                           K5*edf(esoil,ae3,previn$tc)))/btm
-  bL<-ma*(0.25*K3+0.25*K4*delta-0.5*be*(K4+K5))/btm
+  aL<-(previn$tc+0.5*ma*(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf))/btm
+  bL<-(0.25*ma*K3)/btm
   # ~Steady state
   K1<-gtt[sel]*cp[sel]; K2<-gtt2[sel]*cp[sel]; K3<-gha[sel]*cp[sel]
-  K4<-lambda*gv[sel]/mpk; K5<-lambda*gtt2[sel]/mpk
-  aL[sel]<-(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf[sel]+
-              K4*edf(estl[sel],ae2[sel],previn$tc[sel])+
-              K5*edf(esoil,ae3[sel],previn$tc[sel]))/(K1+K2+K3)
-  bL[sel]<-(0.5*(K3+K4*delta[sel]-be[sel]*(K4+K5)))/(K1+K2+K3)
+  aL[sel]<-(K1*mtref+K2*previn$soiltc[1]+K3*previn$tleaf[sel])/(K1+K2+K3)
+  bL[sel]<-(0.5*K3)/(K1+K2+K3)
   bL<-ifelse(bL<0,0,bL)
   # Sensible Heat
   aH<-cp*gha*(previn$tleaf-aL)
@@ -451,18 +464,50 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   bR<-vegp$vegem*sb*2*(previn$tleaf+273.15)^3
   # Leaf temperature
   Ch<-vden*vegp$cpw*vegp$phw
-  ml<-timestep*PAIm/Ch
+  ml<-(timestep*PAIm)/Ch
   dTL<-(ml*(Rabs-aR-aX-aH))/(zla+ml*(bR+bX+bH))
   # check whether steady state
   dTL2<-(Rabs-aR-aX-aH)/(bR+bX+bH)
   sel<-which(abs(dTL2)<abs(dTL))
   dTL[sel]<-dTL2[sel]
-  # Check whether saturated
+  # set limits to air temperature
   tn<-aL+bL*dTL
+  tleaf<-previn$tleaf+dTL
+  sel<-which(tleaf>tn)
+  tmx<-rep(tair,length(tn[sel]))+15
+  tmx<-pmax(tmx,tleaf[sel])
+  tn[sel]<-ifelse(tn[sel]>tmx,tmx,tn[sel])
+  sel<-which(tleaf<tn)
+  tmn<-rep(tair,length(tn[sel]))-5
+  tmn<-pmin(tmn,tleaf[sel])
+  tn[sel]<-ifelse(tn[sel]<tmn,tmn,tn[sel])
+  # check whether saturated or not
   eam<-ae+be*dTL
   ean<-eaj+2*(eam-eaj)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   ean<-ifelse(ean>es,es,ean)
+  # Calculate minimum potential vapour pressure
+  eamn <- (relhum/100)*0.6108*exp(17.27*tair/(tair+237.3))
+  ean<-ifelse(ean<eamn,eamn,ean)
+  # Dew point temperature
+  a<-log(ean/0.6108)
+  Tdew<- -(237.3*a)/(a-17.27)
+  dT1 <- -(previn$tleaf+dTL - Tdew)
+  dT1 <- ifelse(dT1<0,0,dT1)
+  estl <- 0.6108*exp(17.27*tleaf/(tleaf+237.3))*lrhf
+  Lc <- lambda * gv * (estl - ean) / mpk
+  dT2 <- -(ml/zla)*Lc
+  dT2 <- ifelse(dT2 < 0, 0, dT2)
+  dT <- pmin(dT1,dT2)
+  tleaf<-tleaf+dT
+  dTL<-tleaf-previn$tleaf
+  # Set limits to leaf temperature
+  dTmx <- previn$tc + 20.2 - previn$tleaf
+  dTmn <- previn$tc - 4.5 - previn$tleaf
+  dTL[dTL>dTmx] <- dTmx[dTL>dTmx]
+  dTL[dTL<dTmn] <- dTmn[dTL<dTmn]
+  tn<-aL+bL*dTL
+  tleaf<-previn$tleaf+dTL
   return(list(tn=tn, tleaf=previn$tleaf+dTL, ea=ean, gtt=gtt, Rem=aR+bR*dTL,
               H=aH+bH*dTL, L=aX+bX*dTL, esoil = esoil))
 }
@@ -575,7 +620,7 @@ paraminit <- function(m, sm, hgt, tair, u, relhum, tsoil, Rsw) {
 soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
   sel<-which(soilparams$Soil.type==soiltype)
   soilp<-soilparams[sel,]
-  z<-(sdepth/m^1.5)*c(1:m)^1.5
+  z<-(sdepth/m^1.2)*c(1:m)^1.2
   if (is.na(reqdepth) == F) z[abs(z-reqdepth)==min(abs(z-reqdepth))][1]<-reqdepth
   soilp<-as.list(soilp)
   soilp$z<-z
@@ -606,6 +651,10 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' for which temperatures are modelled (FALSE - see details)
 #' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
 #' canopy.
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
+#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
 #' @return a list of of model outputs for the current timestep with the same format as `previn`
 #' @import microctools
 #' @export
@@ -636,9 +685,9 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #'   plot(z ~ previn$tc, type = "l", xlab = "Temperature", ylab = "Height", main = i)
 #'   previn <- runonestep(climvars, previn, vegp, soilp, 60, tme, 50, -5)
 #' }
-runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 100,
+runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 1000,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2) {
+                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1) {
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
   tair<-climvars$tair; relhum<-climvars$relhum; pk<-climvars$pk; u<-climvars$u
@@ -652,7 +701,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Adjust wind to 2 m above canopy
   if (metopen) {
     if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
-    u2<-u*log(67.8*hgt-5.42)/log(67.8*(hgt+2)-5.42)
+    u2<-u*log(67.8*(hgt+2)-5.42)/log(67.8*2-5.42)
   } else {
     u2 <- u
     if (windhgt != (2+hgt)) u2 <- windprofile(u, windhgt, hgt+2, a = 2, sum(vegp$PAI), hgt, previn$psi_m)
@@ -677,8 +726,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
   # Set limits to tcan
-  tcan<-ifelse(tcan>(tair+20),(tair+20),tcan)
-  tcan<-ifelse(tcan<(tair-15),(tair-15),tcan)
+  tcan<-ifelse(tcan>(tair+15),(tair+15),tcan)
+  tcan<-ifelse(tcan<(tair-4.5),(tair-4.5),tcan)
   # Adjust relative humidity
   ea<-0.6108*exp(17.27*tair/(tair+237.3))*(relhum/100)
   eas<-0.6108*exp(17.27*tcan/(tcan+237.3))
@@ -713,9 +762,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   mrge<-lmm$mrge; gtx<-lmm$gtx; zth<-lmm$zth
   tc <- tc[-1]
   # ========== Calculate absorbed radiation =========== #
-  PAIc<-rev(cumsum(rev(vegp$PAI)))
-  Rabss<-leafabs(Rsw,tme,tair,previn$soiltc[1],lat,long,PAIc,vegp$pLAI,vegp$x,vegp$refls,
-                 vegp$refw,vegp$vegem,skyem,dp,merid,dst,vegp$clump)
+  Rabss<-leafabs(Rsw,tme,tair,previn$soiltc[1],lat,long,vegp$PAI,vegp$pLAI,vegp$x,
+                 vegp$refls,vegp$refw,vegp$refg,vegp$vegem,skyem,dp,merid,dst,vegp$clump)
   Rabs<-Rabss$aRsw+Rabss$aRlw
   # ============= Conductivities =============== #
   # Vapour conductivity
@@ -723,7 +771,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Leaf conductivity
   dtc<-previn$tleaf-previn$tc
   gha<-1.41*gforcedfree(vegp$lw*0.71,uz,tc,dtc,pk)
-  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta)
+  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta,zlafact = zlafact, lrhf = lrhf)
   eaj<-0.6108*exp(17.27*tc/(tc+237.3))*(previn$rh/100)
   Vo<-eaj/previn$pk
   # =============== Soil conductivity =========== #
@@ -733,7 +781,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # conductivity and specific heat
   vden<-(vegp$PAI*vegp$thickw)
   mult<-1-vden
-  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)
+  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)*0.5*zlafact
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
@@ -870,6 +918,11 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' for which temperatures are modelled (FALSE - see details)
 #' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
 #' canopy.
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
+#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
+#'
 #' @return a list of model outputs as for [paraminit()] or [runonestep()]
 #'
 #' @details If `reqhgt` is set, and below the height of the canopy, the canopy node nearest
@@ -887,7 +940,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                    sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                    dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
-                   windhgt = 2) {
+                   windhgt = 2, zlafact = 1, lrhf = 1) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   timestep<-round(as.numeric(tme[2])-as.numeric(tme[1]),0)
   reqdepth <- NA
@@ -900,7 +953,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
   previn <- paraminit(m, sm, vegp$hgt, climdata$temp[1], climdata$windspeed[1], climdata$relhum[1],
                       tsoil, climdata$swrad[1])
   dp <- climdata$difrad[1] / climdata$swrad[1]
-  dp[is.na(dp)] <- 0.5
+  dp[!is.finite(dp)] <- 0.5
   climvars <- list(tair = climdata$temp[1], relhum = climdata$relhum[1], pk = climdata$pres[1],
                    u2 = climdata$windspeed[1], tsoil = tsoil, skyem = climdata$skyem[1],
                    Rsw = climdata$swrad[1], dp = dp)
@@ -909,7 +962,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
   for (i in 1:steps) {
     previn  <- runonestep(climvars, previn, vegp2, soilp, timestep, tme[1], lat,
                           long, edgedist, sdepth, reqhgt, zu, theta, thetap,
-                          merid, dst, n, metopen, windhgt)
+                          merid, dst, n, metopen, windhgt, zlafact, lrhf)
     H[i]<-previn$H
     previn$H<-mean(H)
   }
@@ -944,6 +997,10 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' for which temperatures are modelled (FALSE - see details)
 #' @param windhgt height above ground of wind measurement. If `metopen` is FALSE, must be above
 #' canopy.
+#' @param zlafact numeric value indicating how close to leaves air temperatures are
+#' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
+#' Must be greater than 1.
+#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
 #' @return a data.frame with the following elements:
 #' @return `obs_time` POSIXlt object of times associated wiht eahc output
 #' @return `reftemp` air temperature (deg C) at reference height - i.e. `climdata$temp`
@@ -987,19 +1044,19 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' dataout <- runmodel(weather, vegp, soilp, lat = 50, long = -5)
 #' par(mfrow=c(2,1))
 #' plot(tout~as.POSIXct(obs_time), data = dataout, type = "l", col = "red",
-#'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-#' par(new=T)
+#'      xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
+#' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-#'      xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
+#'      xlab = "", ylab = "Temperature", ylim = c(-8.5, 27.5), main = "Air temperature")
 #' plot(tleaf~as.POSIXct(obs_time), data = dataout, type = "l", col = "darkgreen",
-#'      xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
-#' par(new=T)
+#'      xlab = "Month", ylab = "Temperature", ylim = c(-8.5, 27.5))
+#' par(new=TRUE)
 #' plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0.5),
-#'     xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
+#'     xlab = "", ylab = "", ylim = c(-8.5, 27.5), main = "Leaf temperature")
 runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                      sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                      dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-                     tsoil = NA, metopen = TRUE, windhgt = 2) {
+                     tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   previn <- spinup(climdata,vegp,soilp,lat,long,edgedist,reqhgt,sdepth,zu,theta,
                    thetap,merid,dst,n,plotout,steps,metopen,windhgt)
@@ -1010,7 +1067,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
   }
   if (is.na(tsoil)) tsoil<-mean(climdata$temp, na.rm=T)
   dp <- climdata$difrad / climdata$swrad
-  dp[is.na(dp)] <- 0.5
+  dp[!is.finite(dp)] <- 0.5
   tout <- 0
   tleaf <- 0
   rh <- 0
@@ -1025,8 +1082,9 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
                    Rsw = climdata$swrad[i], dp = dp[i])
     vegp2<-.vegpsort(vegp, i)
     previn <- runonestep(climvars,previn,vegp2,soilp,timestep,tme[i],lat,long,
-                         edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n,metopen,windhgt)
-    if (i%%plotsteps == 0) plotresults(previn, vegp, climvars, i)
+                         edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n,metopen,windhgt,
+                         zlafact, lrhf)
+    if (i%%plotsteps == 0 & plotout) plotresults(previn, vegp, climvars, i)
     if (is.na(reqhgt)) {
       tout[i] <- mean(previn$tc)
       tleaf[i] <- mean(previn$tleaf)

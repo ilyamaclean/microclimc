@@ -4,9 +4,9 @@
 \alias{leafabs}
 \title{Calculates radiation absorbed by leaf}
 \usage{
-leafabs(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw,
-  vegem, skyem, dp = NA, merid = round(long/15, 0) * 15, dst = 0,
-  clump = 0)
+leafabs(Rsw, tme, tair, tground, lat, long, PAI, pLAI, x, refls, refw,
+  refg, vegem, skyem, dp = NA, merid = round(long/15, 0) * 15,
+  dst = 0, clump = 0)
 }
 \arguments{
 \item{Rsw}{Incoming shortwave radiation (W / m2)}
@@ -21,7 +21,7 @@ leafabs(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw,
 
 \item{long}{longitude (decimal degrees)}
 
-\item{PAIc}{Vector of cumulative plant area indices for each canopy layer}
+\item{PAI}{Vector of plant area indices for each canopy layer}
 
 \item{pLAI}{Proportion of plant area that is green vegetation}
 
@@ -30,6 +30,8 @@ leafabs(Rsw, tme, tair, tground, lat, long, PAIc, pLAI, x, refls, refw,
 \item{refls}{reflectivity of green vegetation to shortwave radiation}
 
 \item{refw}{reflectivity of woody vegetation to shortwave radiation}
+
+\item{refg}{reflectivity of ground to shortwave radiation}
 
 \item{vegem}{emissivity of vegetation}
 
