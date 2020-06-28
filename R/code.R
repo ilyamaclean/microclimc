@@ -416,7 +416,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   eref<-(mrh/100)*esref
   delta <- 4098*(0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3)))/(previn$tleaf+237.3)^2
   rhsoil<-soilrh(theta,soilp$b,-soilp$psi_e,soilp$Smax, previn$soiltc[1])
-  esoil<-rhsoil*satvap(revin$soiltc[1],ice = TRUE)
+  esoil<-rhsoil*satvap(previn$soiltc[1],ice = TRUE)
   # Test whether steady state
   PAIm<-2*vegp$PAI/zth
   gv2<-(PAIm/zth)*gv
