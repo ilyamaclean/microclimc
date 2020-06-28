@@ -7,7 +7,8 @@
 runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
   sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
   dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-  tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1)
+  tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1,
+  surfwet = 1)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables (see e.g. \code{weather})}
@@ -58,7 +59,7 @@ canopy.}
 needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 Must be greater than 1.}
 
-\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
+\item{surfwet}{fraction of vegetation surface acting like free-water surface}
 }
 \value{
 a data.frame with the following elements:

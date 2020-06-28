@@ -351,8 +351,7 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #' @param zlafact numeric value indicating how close to leaves air temperatures are
 #' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 #' Must be greater than 1.
-#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
-#'
+#' @param surfwet Fraction of surface area acting like a free‐water surface
 #' @return a list with the following elements:
 #' @return `tn` air temperature of each layer (deg C)
 #' @return `tleaf` leaf temperature of each layer (deg C)
@@ -379,7 +378,7 @@ abovecanopytemp <- function(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3
 #'                   vegp, soilp, 0.3)
 #' plot(z ~ ltemp$tleaf, type = "l", xlab = "Leaf temperature", ylab = "Height")
 leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp, soilp,
-                     theta, zlafact = 1, lrhf = 1) {
+                     theta, zlafact = 1, surfwet = 1) {
   edf<-function(ea1,ea2,tc) {
     tk<-tc+273.15
     es<-0.6108*exp(17.27*tc/(tc+237.3))
@@ -388,14 +387,16 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
     y
   }
   z<-previn$z
-  lambda <- -42.575*tair+44994
+  lambda <- (-42.575*tair+44994)*surfwet
   # Sort out thicknesses
   m<-length(gt)-1
   zth<-c(z[2:m]-z[1:(m-1)],vegp$hgt-(z[m]+z[m-1])/2)
   zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5*zlafact
   # Sort out conductivitites
   gt<-0.5*gt+0.5*previn$gt
-  gv<-0.5*gv+0.5*previn$gv
+  gv1 <- 1 / ((1/previn$gv) + (1/previn$gha))
+  gv2 <- 1 / ((1/gv) + (1/gha))
+  gv<-0.5*gv1+0.5*gv2
   gha<-0.5*gha+0.5*previn$gha
   mtref<-0.5*tair+0.5*previn$tair
   mrh<-0.5*relhum+0.5*previn$relhum
@@ -410,12 +411,12 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Vapour pressure
   esj<-0.6108*exp(17.27*previn$tc/(previn$tc+237.3))
   eaj<-(previn$rh/100)*esj
-  estl<-0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3))*lrhf
-  esref<-0.6108*exp(17.27*mtref/(mtref+237.3))
+  estl<-satvap(previn$tleaf,ice = TRUE)
+  esref<-satvap(mtref,ice=TRUE)
   eref<-(mrh/100)*esref
   delta <- 4098*(0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3)))/(previn$tleaf+237.3)^2
   rhsoil<-soilrh(theta,soilp$b,-soilp$psi_e,soilp$Smax, previn$soiltc[1])
-  esoil<-rhsoil*0.6108*exp(17.27*previn$soiltc[1]/(previn$soiltc[1]+237.3))
+  esoil<-rhsoil*satvap(revin$soiltc[1],ice = TRUE)
   # Test whether steady state
   PAIm<-2*vegp$PAI/zth
   gv2<-(PAIm/zth)*gv
@@ -494,7 +495,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   Tdew<- -(237.3*a)/(a-17.27)
   dT1 <- -(previn$tleaf+dTL - Tdew)
   dT1 <- ifelse(dT1<0,0,dT1)
-  estl <- 0.6108*exp(17.27*tleaf/(tleaf+237.3))*lrhf
+  estl <- 0.6108*exp(17.27*tleaf/(tleaf+237.3))
   Lc <- lambda * gv * (estl - ean) / mpk
   dT2 <- -(ml/zla)*Lc
   dT2 <- ifelse(dT2 < 0, 0, dT2)
@@ -654,7 +655,7 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' @param zlafact numeric value indicating how close to leaves air temperatures are
 #' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 #' Must be greater than 1.
-#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
+#' @param surfwet fraction of vegetation surface acting like a free-water surface
 #' @return a list of of model outputs for the current timestep with the same format as `previn`
 #' @import microctools
 #' @export
@@ -687,7 +688,7 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 #' }
 runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 1000,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1) {
+                       dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1) {
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
   tair<-climvars$tair; relhum<-climvars$relhum; pk<-climvars$pk; u<-climvars$u
@@ -771,7 +772,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # Leaf conductivity
   dtc<-previn$tleaf-previn$tc
   gha<-1.41*gforcedfree(vegp$lw*0.71,uz,tc,dtc,pk)
-  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta,zlafact = zlafact, lrhf = lrhf)
+  tln<-leaftemp(tcan,relhum,pk,timestep,gt,gha,gv,Rabs,previn,vegp,soilp,theta,zlafact = zlafact, surfwet = surfwet)
   eaj<-0.6108*exp(17.27*tc/(tc+237.3))*(previn$rh/100)
   Vo<-eaj/previn$pk
   # =============== Soil conductivity =========== #
@@ -921,7 +922,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' @param zlafact numeric value indicating how close to leaves air temperatures are
 #' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 #' Must be greater than 1.
-#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
+#' @param surfwet fraction of vegetation surface acting like a free-water surface
 #'
 #' @return a list of model outputs as for [paraminit()] or [runonestep()]
 #'
@@ -940,7 +941,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                    sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                    dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
-                   windhgt = 2, zlafact = 1, lrhf = 1) {
+                   windhgt = 2, zlafact = 1, surfwet = 1) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   timestep<-round(as.numeric(tme[2])-as.numeric(tme[1]),0)
   reqdepth <- NA
@@ -962,7 +963,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
   for (i in 1:steps) {
     previn  <- runonestep(climvars, previn, vegp2, soilp, timestep, tme[1], lat,
                           long, edgedist, sdepth, reqhgt, zu, theta, thetap,
-                          merid, dst, n, metopen, windhgt, zlafact, lrhf)
+                          merid, dst, n, metopen, windhgt, zlafact, surfwet)
     H[i]<-previn$H
     previn$H<-mean(H)
   }
@@ -1000,7 +1001,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 #' @param zlafact numeric value indicating how close to leaves air temperatures are
 #' needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 #' Must be greater than 1.
-#' @param lrhfleaf relative humidity factor (1 = saturated, 0 = dry)
+#' @param surfwet fraction of vegetation surface acting like free-water surface
 #' @return a data.frame with the following elements:
 #' @return `obs_time` POSIXlt object of times associated wiht eahc output
 #' @return `reftemp` air temperature (deg C) at reference height - i.e. `climdata$temp`
@@ -1056,7 +1057,7 @@ spinup <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA
 runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
                      sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                      dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-                     tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1) {
+                     tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1) {
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   previn <- spinup(climdata,vegp,soilp,lat,long,edgedist,reqhgt,sdepth,zu,theta,
                    thetap,merid,dst,n,plotout,steps,metopen,windhgt)
@@ -1083,7 +1084,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
     vegp2<-.vegpsort(vegp, i)
     previn <- runonestep(climvars,previn,vegp2,soilp,timestep,tme[i],lat,long,
                          edgedist,sdepth,reqhgt,zu,theta,thetap,merid,dst,n,metopen,windhgt,
-                         zlafact, lrhf)
+                         zlafact, surfwet)
     if (i%%plotsteps == 0 & plotout) plotresults(previn, vegp, climvars, i)
     if (is.na(reqhgt)) {
       tout[i] <- mean(previn$tc)
