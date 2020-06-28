@@ -879,6 +879,9 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   gt2<-gcanopy(uh,d+0.2*zm,0,tn[sel],tnsoil[1],hgt,sum(vegp$PAI),vegp$x,vegp$lw,
                vegp$cd,mean(vegp$iw),phi_m,pk)
   G<-gt2*cp[1]*(tn[sel]-tnsoil[1])
+  Gmx <- abs((1-alb)*Rsw-Rlw-Lt)
+  G<-ifelse(G>Gmx,Gmx,G)
+  G<-ifelse(G< -Gmx, - Gmx, G)
   H<-(1-alb)*Rsw-Rlw-G-Lt
   # Incoming radiation
   Rswin<-Rabss$aRsw/(1-Rabss$ref)
