@@ -726,6 +726,10 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   psi_m<-abod$psi_m; psi_h<-abod$psi_h; phi_m<-cand$phi_m; phi_h<-cand$phi_h
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
+  es <- satvap(tair,ice=TRUE)
+  ea<-(relhum/100)*es
+  tfrost <- dewpoint(ea, tair)
+  tcan<-ifelse(tcan<tfrost,tfrost,tcan)
   # Set limits to tcan
   tcan<-ifelse(tcan>(tair+15),(tair+15),tcan)
   tcan<-ifelse(tcan<(tair-4.5),(tair-4.5),tcan)
@@ -855,6 +859,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
     eair<-(relhum/100)*0.6108*exp(17.27*tcan/(tcan+237.3))
     ea<-(1-wgt)*tln$esoil+wgt*eair
   }
+  # Set limits to soil temperatures
+  tnsoil<-ifelse(tnsoil<tfrost,tfrost,tnsoil)
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   rh<-(ea/es)*100
   rh[rh>100]<-100
@@ -872,9 +878,6 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   gt2<-gcanopy(uh,d+0.2*zm,0,tn[sel],tnsoil[1],hgt,sum(vegp$PAI),vegp$x,vegp$lw,
                vegp$cd,mean(vegp$iw),phi_m,pk)
   G<-gt2*cp[1]*(tn[sel]-tnsoil[1])
-  tstG <- (1-alb)*Rsw-Rlw-Lt
-  G <- ifelse(G > abs(tstG), abs(tstG), G)
-  G <- ifelse(G < -abs(tstG), -abs(tstG), G)
   H<-(1-alb)*Rsw-Rlw-G-Lt
   # Incoming radiation
   Rswin<-Rabss$aRsw/(1-Rabss$ref)
