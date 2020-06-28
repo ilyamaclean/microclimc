@@ -883,6 +883,9 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   G<-ifelse(G>Gmx,Gmx,G)
   G<-ifelse(G< -Gmx, - Gmx, G)
   H<-(1-alb)*Rsw-Rlw-G-Lt
+  # dewpoints
+  tdws <- dewpoint(tln$ea,tn)
+  tn<-ifelse(tn<tdws,tdws,tn)
   # Incoming radiation
   Rswin<-Rabss$aRsw/(1-Rabss$ref)
   Rlwin<-canlw(tn, sum(vegp$PAI), 1-vegp$vegem, skyem = climvars$skyem)$lwin
