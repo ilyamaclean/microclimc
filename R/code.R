@@ -942,8 +942,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' @details If `reqhgt` is set, and below the height of the canopy, the canopy node nearest
 #' to that height is set at the value specified. The returned value `tabove` is then the
 #' temperature at the top of the canopy. If `reqhgt` is above canopy, nodes are calculated
-#' automatically, but `tabove` is the temperature at height `reqhgt`. If `reqhgt` is
-#' negative, the soil node nearest to that height is set at the value specified.
+#' automatically, but `tabove` is the temperature at height `reqhgt`. If temperatures below ground are
+#' needed, the depth can be set using [soilinit()]
 #' @export
 #' @examples
 #' tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
@@ -1071,8 +1071,15 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
                      sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                      dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
                      tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1) {
+  if (is.na(reqhgt) == F & reqhgt < 0) {
+    dif <- soilp$z + reqhgt
+    sel <- which(abs(dif) == min(abs(dif)))[1]
+    soilp$z[sel]<- -reqhgt
+    if (dif[sel]<0 & sel != length(soilp$z)) soilp$z[sel+1]<-soilp$z[sel+1]-dif[sel]
+  }
+  spinhgt <- ifelse(is.na(reqhgt) == F & reqhgt > 0, reqhgt, NA)
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-  previn <- spinup(climdata,vegp,soilp,lat,long,edgedist,reqhgt,sdepth,zu,theta,
+  previn <- spinup(climdata,vegp,soilp,lat,long,edgedist,spinhgt,sdepth,zu,theta,
                    thetap,merid,dst,n,plotout,steps,metopen,windhgt)
   timestep<-round(as.numeric(tme[2])-as.numeric(tme[1]),0)
   reqdepth <- NA
@@ -1129,8 +1136,9 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
         Rlwin[i] <- previn$Rlwin[sel]
         L[i] <- previn$L[sel]
       }
-      if (reqhgt < 0) {
-        sel <- which(previn$sz == -reqhgt)
+      if (reqhgt <= 0) {
+        dif <- soilp$z + reqhgt
+        sel <- which(abs(dif) == min(abs(dif)))[1]
         tout[i] <- previn$soiltc[sel]
         tleaf[i] <- mean(previn$tleaf)
         rh[i] <- mean(previn$rh)
@@ -1146,4 +1154,3 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
                       SWin=Rswin,LWin=Rlwin,H=H,L=L,G=G)
   return(dataout)
 }
-

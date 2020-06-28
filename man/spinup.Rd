@@ -68,8 +68,8 @@ appropriate soil temperatures are set.
 If \code{reqhgt} is set, and below the height of the canopy, the canopy node nearest
 to that height is set at the value specified. The returned value \code{tabove} is then the
 temperature at the top of the canopy. If \code{reqhgt} is above canopy, nodes are calculated
-automatically, but \code{tabove} is the temperature at height \code{reqhgt}. If \code{reqhgt} is
-negative, the soil node nearest to that height is set at the value specified.
+automatically, but \code{tabove} is the temperature at height \code{reqhgt}. If temperatures below ground are
+needed, the depth can be set using \code{\link[=soilinit]{soilinit()}}
 }
 \examples{
 tme<-as.POSIXlt(weather$obs_time, format = "\%Y-\%m-\%d \%H:\%M", tz = "UTC")
