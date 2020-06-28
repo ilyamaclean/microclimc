@@ -860,7 +860,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
     ea<-(1-wgt)*tln$esoil+wgt*eair
   }
   # Set limits to soil temperatures
-  tnsoil<-ifelse(tnsoil<tfrost,tfrost,tnsoil)
+  tnsoil[1]<-ifelse(tnsoil[1]<tfrost,tfrost,tnsoil[1])
+  tnsoil[1]<-ifelse(tnsoil[1]>tair+30,tair+30,tnsoil[1])
   es<-0.6108*exp(17.27*tn/(tn+237.3))
   rh<-(ea/es)*100
   rh[rh>100]<-100
