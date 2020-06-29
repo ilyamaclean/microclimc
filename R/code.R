@@ -691,6 +691,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
                        dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1) {
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
+  if (m < 3) stop ("At least three canopy layers must be provided")
   tair<-climvars$tair; relhum<-climvars$relhum; pk<-climvars$pk; u<-climvars$u
   tsoil<-climvars$tsoil; skyem<-climvars$skyem; Rsw<-climvars$Rsw; dp<-climvars$dp
   H <- previn$H
