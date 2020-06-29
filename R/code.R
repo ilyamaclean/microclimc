@@ -689,6 +689,13 @@ soilinit <- function(soiltype, m = 10, sdepth = 2, reqdepth = NA) {
 runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, edgedist = 1000,
                        sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
                        dst = 0, n = 0.6, metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1) {
+  # Check whether any vegetation layers have zero PAI
+  tst <- min(vegp$PAI)
+  if (tst == 0) {
+    sel <- which(vegp$PAI == 0)
+    vegp$PAI[sel] <- 0.0001
+    warning("Some PAI values are 0. Zero PAI values set to 0.0001 to enable model to run\n")
+  }
   # =============   Unpack climate variables ========== #
   m <- length(previn$tc)
   if (m < 3) stop ("At least three canopy layers must be provided")
