@@ -898,7 +898,9 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 .vegpsort <- function(vegp, i) {
   if (class(vegp$PAI) == "matrix") PAI <- as.vector(vegp$PAI[,i])
   if (class(vegp$pLAI) == "matrix") pLAI <- as.vector(vegp$pLAI[,i])
-  if (length(vegp$zm0) > 1) zm0 <- vegp$zm0[i]
+  if (length(vegp$zm0) > 1) {
+    zm0 <- vegp$zm0[i]
+  } else zm0<-vegp$zm0[1]
   vegp$PAI <- PAI
   vegp$pLAI <- pLAI
   vegp$zm0 <- zm0
