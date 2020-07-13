@@ -803,7 +803,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
     mm<-(lambda[1]*ph[1]*z[1])/pk
     delta<-4098*(0.6108*exp(17.27*previn$soiltc[1]/(previn$soiltc[1]+237.3)))/(previn$soiltc[1]+237.3)^2
     btm<-1+0.5*(mm/cdk$cd[1])*delta
-    Xs<-((1-vegp$refg)*(Rabss$aRsw[1]/cdk$cd[1])-(mm/cdk$cd[1])*(tln$esoil-tln$ea[1]))/btm
+    Xs<-((1-vegp$refg)*(Rabss$aRsw[1]/cdk$cd[1])-(mm/cdk$cd[1])*(tln$esoil[1]-tln$ea[1]))/btm
   } else {
     Xs<-(1-vegp$refg)*(Rabss$aRsw[1]/cdk$cd[1])
   }
@@ -833,7 +833,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
     gt2<-ifelse(lav$gt>gtmx,gtmx,lav$gt)
     tn2<-tnair[-1]; tn2<-tn2[-length(tn2)]
     if (length(lav$Vo)>1) {
-      Vn<-ThomasV(lav$Vo,tn2,pk,theta,thetap,relhum,tcan,tnsoil[1],zth2,gt2,Vmflux,n,previn,soilp)
+      Vn<-ThomasV(lav$Vo,tn2,pk,theta[1],thetap[1],relhum,tcan,tnsoil[1],zth2,gt2,Vmflux,n,previn,soilp)
     } else {
       Vair<-(0.6108*exp(17.27*tcan/(tcan+237.3))*(relhum/100))/pk
       rhsoil<-soilrh(theta,soilp$b,soilp$psi_e,soilp$Smax,tnsoil[1])
