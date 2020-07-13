@@ -69,7 +69,7 @@ leafem <- function(tc, vegem) {
 #' @param tmsoil temperature (deg C) of deepest soil layer. Typically mean annual temperature
 #' @param tair air temperature at reference height 2 m above canopy in current time step (deg C)
 #' @param k vector of thermal conductances between layers (W / m^2 / K) (see details)
-#' @param cd thermal heat capacity of layers (W / m^2 / K)
+#' @param cd thermal heat capacity of layers (J / m^3 / K)
 #' @param f forward / backward weighting of algorithm (see details)
 #' @param X vector of temperatures to be added resulting from e.g. leaf heat fluxes or radiation
 #' absorbed by top soil layer
@@ -798,7 +798,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
-  vdef<-tln$esoil-tln$ea[1]
+  vdef<-tln$esoil[1]-tln$ea[1]
   if(vdef>0) {
     mm<-(lambda[1]*ph[1]*z[1])/pk
     delta<-4098*(0.6108*exp(17.27*previn$soiltc[1]/(previn$soiltc[1]+237.3)))/(previn$soiltc[1]+237.3)^2
