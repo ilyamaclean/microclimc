@@ -904,6 +904,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 }
 #' internal function to sort out vegetation parameters
 .vegpsort <- function(vegp, i) {
+  PAI<-vegp$PAI
+  pLAI<-vegp$pLAI
   if (class(vegp$PAI) == "matrix") PAI <- as.vector(vegp$PAI[,i])
   if (class(vegp$pLAI) == "matrix") pLAI <- as.vector(vegp$pLAI[,i])
   if (length(vegp$zm0) > 1) {
