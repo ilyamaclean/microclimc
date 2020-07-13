@@ -833,7 +833,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
     gt2<-ifelse(lav$gt>gtmx,gtmx,lav$gt)
     tn2<-tnair[-1]; tn2<-tn2[-length(tn2)]
     if (length(lav$Vo)>1) {
-      Vn<-ThomasV(lav$Vo,tn2,pk,theta,thetap,relhum,tcan,tnsoil[1],zth2,gt2,Vmflux,n,previn,soilp)
+      Vn<-ThomasV(lav$Vo,tn2,pk,theta[1],thetap[1],relhum,tcan,tnsoil[1],zth2,gt2,Vmflux,n,previn,soilp)
     } else {
       Vair<-(0.6108*exp(17.27*tcan/(tcan+237.3))*(relhum/100))/pk
       rhsoil<-soilrh(theta,soilp$b,soilp$psi_e,soilp$Smax,tnsoil[1])
