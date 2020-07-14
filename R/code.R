@@ -1315,9 +1315,10 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
       Fluxout<-cbind(Radout,Fluxout)
       dataout <- list(Airtemp=tcout,Leaftemp=tleafout,Soiltemp=soiltcout,Windspeed=uzout,
                       Relhum=rhout,Conductivity=Condout,Fluxes=Fluxout)
-    }
-    dataout <- list(Airtemp=tcout,Leaftemp=tleafout,Soiltemp=soiltcout,Windspeed=uzout,
+    } else {
+      dataout <- list(Airtemp=tcout,Leaftemp=tleafout,Soiltemp=soiltcout,Windspeed=uzout,
                     Relhum=rhout)
+    }
   } else {
     dataout<-data.frame(obs_time=tme,reftemp=climdata$temp,tout=tout,tleaf=tleaf,relhum=rh,
                         SWin=Rswin,LWin=Rlwin,H=H,L=L,G=G)
