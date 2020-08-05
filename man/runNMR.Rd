@@ -95,7 +95,7 @@ a list with the following components:
 \code{snowtemp} if snow present, a data,frame of snow temperature (°C), at each of the potential 8 snow layers (see details).
 0 if snow not present.
 
-\code{plant} a data.frame of plant transpiration rates (kg/m^2/s), leaf water potentials
+\code{plant} a data.frame of plant transpiration rates (g/m^2/hr), leaf water potentials
 (J/kg) and root water potential (J/kg) at each of the 10 specified depths.
 }
 \description{
