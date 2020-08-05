@@ -96,7 +96,7 @@ runNMR <- function(weather, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3
                    ERR = 1.5, soiltype = "Loam", PE=rep(1.1,19), KS=rep(0.0037,19), BB=rep(4.5,19),
                    BD=rep(1.3,19), DD=rep(2.65,19), cap = 1, hori = rep(0,36), maxpool = 1000,
                    rainmult = 1, SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
-  if (Veghyt > 2) Veghyt<-2
+  if (Veghyt > 1.5) Veghyt<-1.5
   loc<-c(long,lat)
   tmehr<-as.POSIXlt(weather$obs_time,tz="UTC")
   nyears<-length(unique(tmehr$year))
