@@ -41,6 +41,11 @@
 #' }
 "climvars"
 #'
+#' A vector of daily precipitation
+#'
+#' A vector of daily precipitation (mm) in 1995 at Camborne weather station, Cornwall (50.2178N, 5.32656W)
+#'
+"dailyprecip"
 #' A data frame of hourly weather
 #'
 #' A data frame of hourly weather in 1995 at Camborne weather station, Cornwall (50.2178N, 5.32656W)
