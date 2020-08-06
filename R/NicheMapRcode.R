@@ -349,7 +349,7 @@ runNMR <- function(weather, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3
   soilmoist<-as.data.frame(microut$soilmoist)
   plant<-as.data.frame(microut$plant)
   if (snowmodel == 1) {
-    snow <- microut$sunsnow
+    snow <- as.data.frame(microut$sunsnow)
   } else snow <- 0
   if (max(metout[,1]==0)) stop("ERROR: the model crashed - try a different error tolerance spacing in DEP")
   return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant))
