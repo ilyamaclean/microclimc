@@ -4,7 +4,7 @@
 \alias{runNMR}
 \title{Runs NicheMapR model}
 \usage{
-runNMR(weather, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3,
+runNMR(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3,
   LOR = 1, pLAI = 0.8, clump = 0, REFL = 0.15, LREFL = 0.4,
   SLE = 0.95, DEP = c(0, 2.5, 5, 10, 15, 20, 30, 50, 100, 200),
   ALTT = 0, SLOPE = 0, ASPECT = 0, ERR = 1.5, soiltype = "Loam",
@@ -14,7 +14,7 @@ runNMR(weather, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3,
   0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3))
 }
 \arguments{
-\item{weather}{a data.frame of hourly weather variables in same format as \code{\link[microclimc:weather]{microclimc::weather()}}.
+\item{climdata}{a data.frame of hourly weather variables in same format as \code{\link[microclimc:weather]{microclimc::weather()}}.
 Column obs_time must give times in GMT/UTC.}
 
 \item{prec}{a vector of daily or hourly recipitation values (mm).}
