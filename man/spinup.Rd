@@ -7,7 +7,7 @@
 spinup(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
   sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
   dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
-  windhgt = 2, zlafact = 1, lrhf = 1)
+  windhgt = 2, zlafact = 1, surfwet = 1)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables needed to run the run the model (dataset should follow format of \code{\link[=weather]{weather()}})}
@@ -54,7 +54,7 @@ canopy.}
 needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 Must be greater than 1.}
 
-\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
+\item{surfwet}{fraction of vegetation surface acting like a free-water surface}
 }
 \value{
 a list of model outputs as for \code{\link[=paraminit]{paraminit()}} or \code{\link[=runonestep]{runonestep()}}
@@ -68,8 +68,8 @@ appropriate soil temperatures are set.
 If \code{reqhgt} is set, and below the height of the canopy, the canopy node nearest
 to that height is set at the value specified. The returned value \code{tabove} is then the
 temperature at the top of the canopy. If \code{reqhgt} is above canopy, nodes are calculated
-automatically, but \code{tabove} is the temperature at height \code{reqhgt}. If \code{reqhgt} is
-negative, the soil node nearest to that height is set at the value specified.
+automatically, but \code{tabove} is the temperature at height \code{reqhgt}. If temperatures below ground are
+needed, the depth can be set using \code{\link[=soilinit]{soilinit()}}
 }
 \examples{
 tme<-as.POSIXlt(weather$obs_time, format = "\%Y-\%m-\%d \%H:\%M", tz = "UTC")

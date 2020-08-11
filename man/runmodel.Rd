@@ -5,9 +5,10 @@
 \title{Runs the microclimate model over time}
 \usage{
 runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
-  sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-  dst = 0, n = 0.6, steps = 200, plotout = TRUE, plotsteps = 100,
-  tsoil = NA, metopen = TRUE, windhgt = 2, zlafact = 1, lrhf = 1)
+  sdepth = 2, zu = 2, theta = 0.3, merid = 0, dst = 0, n = 0.6,
+  steps = 200, plotout = TRUE, plotsteps = 100, tsoil = NA,
+  metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1,
+  previn = NA, snow = NA)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables (see e.g. \code{weather})}
@@ -28,9 +29,8 @@ runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
 
 \item{zu}{height above ground of reference climate measurements (m)}
 
-\item{theta}{volumetric water content of upper most soil layer in current time step (m^3 / m^3)}
-
-\item{thetap}{volumetric water content of upper most soil layer in previous time step (m^3 / m^3)}
+\item{theta}{a single numeric value, vector of values or matrix of volumetric water content
+(m^3 / m^3) of soil layer(s) (see details)}
 
 \item{merid}{an optional numeric value representing the longitude (decimal degrees) of the local time zone meridian (0 for GMT).}
 
@@ -58,10 +58,16 @@ canopy.}
 needed for (1 - average leaf-air distance, 0.5 = half average leaf-air distance etc.).
 Must be greater than 1.}
 
-\item{lrhfleaf}{relative humidity factor (1 = saturated, 0 = dry)}
+\item{surfwet}{fraction of vegetation surface acting like free-water surface}
+
+\item{previn}{optional initial conditions as returned by \code{\link[=runonestep]{runonestep()}}. If \code{NA} \code{\link[=spinup]{spinup()}} is
+evoked.}
+
+\item{snow}{optional vector indicating whether snow is present in each hour (1 = yes, 0 = no).
+if \code{NA} snow is assumed not present.}
 }
 \value{
-a data.frame with the following elements:
+if \code{reqhgt} not \code{all} or \code{allclim} a data.frame with the following elements:
 
 \code{obs_time} POSIXlt object of times associated wiht eahc output
 
@@ -84,12 +90,33 @@ sensible heat release from canopy to air.
 
 \code{G} Total heat flux to/from  ground (W / m^2). Positive values indicate
 flux from canopy to ground. Negative values indicate flux from ground to canopy.
+
+if \code{reqhgt} = \code{allclim} a list of the following data.frames:
+
+\code{Airtemp} air temperatures (deg C) at each node for each time step. Also air temperature at canopy
+top and \code{psi_m} parameter, permitting interpolation of temperatures above canopy.
+
+\code{Leaftemp} leaf temperatures (deg C) at each node for time step
+
+\code{Soiltemp} temperatures (deg C) of each soil layer in time step
+
+\code{Windspeed} wind speed (m/s) at each node for each time step
+
+\code{Relhum} relative humidity (percentage) at each node for each time step
+
+if \code{reqhgt} = \code{all}, additionally the following data.frames:
+
+\code{Conductivity} leaf boundary layer, turbulent, and leaf vapour conductivities for each
+time step (mol / m^2 / s)
+
+\code{Fluxes} For each timestep, incoming long and shortwave radiation and
+latent heat fluxes for each node. Also sensible and ground heat fluxes.
 }
 \description{
 \code{runmodel} is used to run the full model over time
 }
 \details{
-If \code{reqhgt} is set, and below the height of the canopy, the canopy node nearest
+If \code{reqhgt} is set to a numeric value, and below the height of the canopy, the canopy node nearest
 to that height is set at the value specified. The returned values \code{tout}, \code{tleaf}, \code{relhum},
 \code{L} and \code{Swin} and \code{Lwin} are then the values at that height. If \code{reqhgt} is above canopy, nodes are
 calculated automatically, and \code{tout} and \code{relhum} are the temperature and relative humidity
@@ -100,7 +127,18 @@ soil temperature at that node, \code{tleaf}, \code{relhum}, \code{Swin} and \cod
 the whole canopy. If \code{reqhgt} is not set, \code{tout}, \code{tleaf}, \code{relhum}, \code{SWin}
 and \code{LWin} are mean values for the whole canopy. The parameter \code{tsoil} is the temperature
 of soil below \code{sdepth}, which is assumed constant. If \code{tsoil} is not provided, it is
-assigned a value equivelent to mean of \code{climdata$temp}.
+assigned a value equivelent to mean of \code{climdata$temp}. If \code{reqhgt} is set to \code{allclim} a list
+of data.frames is returned, giving temperatures, humidities and wind speeds at each node. If
+If \code{reqhgt} is set to \code{all} data.frames of fluxes and conductivities are also returned.
+
+If \code{theta} is a single numeric value, constant soil moisture in each soil layer and
+in each time step is assumed. If \code{theta} is a vector of values of length number of soil
+layers, time-invariant soilmoisture is assumed, but soil moisture is assumed to vary with
+depth. If \code{theta} is a vector of values of length equivelent to the number of time steps
+over which the model is to be run, then time-variant soilmoisture is assumed, but soil moisture
+is assumed not to vary with depth. If \code{theta} is a matrix, the number of rows should be
+equivelent to the number of soil layers, and the number of columns should be equivelent to
+the number of time increments over which the model is to be run.
 
 The wind profile of the canopy depends on the nature of the canopy itself, and often
 available wind measurements are for a nearby weather station located in open ground where

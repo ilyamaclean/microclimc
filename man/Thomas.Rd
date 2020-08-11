@@ -15,7 +15,7 @@ Thomas(tc, tmsoil, tair, k, cd, f = 0.6, X = 0)
 
 \item{k}{vector of thermal conductances between layers (W / m^2 / K) (see details)}
 
-\item{cd}{thermal heat capacity of layers (W / m^2 / K)}
+\item{cd}{thermal heat capacity of layers (J / m^3 / K)}
 
 \item{f}{forward / backward weighting of algorithm (see details)}
 

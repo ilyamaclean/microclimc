@@ -19,7 +19,8 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.0
 Roxygen: list(markdown = TRUE)
-Remotes: ilyamaclean/microctools
+Remotes: ilyamaclean/microctools,
+    mrke/NicheMapR
 Imports: sp,
     raster,
     rgdal,
@@ -28,7 +29,8 @@ Imports: sp,
 Suggests: knitr,
     rmarkdown,
     plotly,
-	  testthat
+	  testthat,
+	  NicheMapR
 VignetteBuilder: knitr
 URL: https://github.com/ilyamaclean/microclimc
 BugReports: http://github.com/microclimc/issues
