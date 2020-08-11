@@ -15,7 +15,7 @@
 #' @param clump clumpiness factor for canopy (0 to 1, 0 = even)
 #' @param REFL A single numeric value of ground reflectivity of shortwave radiation.
 #' @param LREFL A single numeric value of average canopy reflectivity of shortwave radiation.
-#' @param SLE Thermal emissvity of ground
+#' @param SLE Thermal emissivity of ground
 #' @param DEP Soil depths at which calculations are to be made (cm), must be 10 values
 #' starting from 0, and more closely spaced near the surface.
 #' @param ALTT elevation (m) of location.
@@ -958,9 +958,7 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
 #' # ====================================================================== #
 runwithNMR <- function(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0, slope = 0,
                        aspect = 0,  metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95,
-                       ERR = 1.5, PE = rep(1.1, 19), KS = rep(0.0037, 19),
-                       BB = rep(4.5, 19),BD = rep(1.3, 19), DD = rep(2.65, 19),
-                       cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
+                       ERR = 1.5, cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
                        SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
   # (1) Unpack variables
   tair<-climvars$temp
@@ -976,6 +974,11 @@ runwithNMR <- function(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   LREFL<-mean(pLAI*vegp$refls+(1-pLAI)*vegp$reflp)
   soiltype<-as.character(soilp$Soil.type)
   DEP<-c(0,2.5,5,10,15,20,30,50,100,200)
+  PE = rep(1.1, 19)
+  KS = rep(0.0037, 19)
+  BB = rep(4.5, 19)
+  BD = rep(1.3, 19)
+  DD = rep(2.65, 19)
   nmrout<-runNMR(climvars,prec,lat,long,0.05,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)

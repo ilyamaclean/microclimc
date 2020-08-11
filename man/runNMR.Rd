@@ -41,7 +41,7 @@ Column obs_time must give times in GMT/UTC.}
 
 \item{LREFL}{A single numeric value of average canopy reflectivity of shortwave radiation.}
 
-\item{SLE}{Thermal emissvity of ground}
+\item{SLE}{Thermal emissivity of ground}
 
 \item{DEP}{Soil depths at which calculations are to be made (cm), must be 10 values
 starting from 0, and more closely spaced near the surface.}
