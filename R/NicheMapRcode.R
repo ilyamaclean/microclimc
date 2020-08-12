@@ -681,6 +681,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
 runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE, windhgt = 2,
                       surfwet = 1, groundem = 0.95) {
   # (1) Unpack variables
+  tme<-as.POSIXlt(climdata$obs_time)
   tair<-climdata$temp
   relhum<-climdata$relhum
   pk<-climdata$pres
