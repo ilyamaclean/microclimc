@@ -104,8 +104,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   ystart<-tmehr$year[1]+1900
   yfinish<-tmehr$year[length(tmehr)]+1900
   yearlist<-seq(ystart,(ystart+(nyears-1)),1)
-  tme<-seq(tmehr[1],tmehr[length(tmehr)],"days")
-  doy <- as.numeric(strftime(tme, format = "%j"))
+  doy <- unique(as.numeric(strftime(tmehr, format = "%j")))
   ndays<-length(doy)
   doynum<-ndays
   ida<-ndays
