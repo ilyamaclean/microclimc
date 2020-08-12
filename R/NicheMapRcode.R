@@ -316,7 +316,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   RAINFALL1<-matrix(data=0,nrow=ndays,ncol=1)
   tannul1<-matrix(data=0,nrow=ndays,ncol=1)
   moists1<-matrix(data=0,nrow=10,ncol=ndays)
-  doy1[1:ndays]<-doy
   SLES1[1:ndays]<-SLES
   MAXSHADES1[1:ndays]<-MAXSHADES
   MINSHADES1[1:ndays]<-MINSHADES
