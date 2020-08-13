@@ -957,15 +957,15 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
 #' par(new=T)
 #' plot(tsoil2m~Month,type="l",lwd=2,col="blue",xlab="",ylab="",ylim=c(tmn,tmx))
 #' # ====================================================================== #
-runwithNMR <- function(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0, slope = 0,
+runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0, slope = 0,
                        aspect = 0,  metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95,
                        ERR = 1.5, cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
                        SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
   # (1) Unpack variables
-  tair<-climvars$temp
-  relhum<-climvars$relhum
-  pk<-climvars$pres
-  u<-climvars$windspeed
+  tair<-climdata$temp
+  relhum<-climdata$relhum
+  pk<-climdata$pres
+  u<-climdata$windspeed
   hgt<-vegp$hgt
   # (1) Run NicheMapR
   PAIt<-apply(vegp$PAI,2,sum)
@@ -980,7 +980,7 @@ runwithNMR <- function(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   BB = rep(4.5, 19)
   BD = rep(1.3, 19)
   DD = rep(2.65, 19)
-  nmrout<-runNMR(climvars,prec,lat,long,0.05,hgt,2,PAIt,vegp$x,pLAI,
+  nmrout<-runNMR(climdata,prec,lat,long,0.05,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
   if (reqhgt < 0) {
@@ -993,12 +993,12 @@ runwithNMR <- function(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
     tz1<-soilt[,o[1]+1]
     tz2<-soilt[,o[2]+1]
     tz<-tz1*(dif2/(dif1+dif2))+tz2*(dif1/(dif1+dif2))
-    metout <- data.frame(obs_time=climvars$obs_time,Tref=tair,Tloc=tz,
+    metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tz,
                          tleaf=-999,RHref=relhum,RHloc=-999)
   } else if (reqhgt < (hgt+2)) {
-    metout <- runmodelS(climvars,vegp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
+    metout <- runmodelS(climdata,vegp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
   } else {
-    metout <- data.frame(obs_time=climvars$obs_time,Tref=tair,Tloc=tair,
+    metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tair,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
     warning("Height out of range. Output climate identical to input")
   }
