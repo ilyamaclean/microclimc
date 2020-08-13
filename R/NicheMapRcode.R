@@ -104,9 +104,10 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   ystart<-tmehr$year[1]+1900
   yfinish<-tmehr$year[length(tmehr)]+1900
   yearlist<-seq(ystart,(ystart+(nyears-1)),1)
-  tme<-seq(tmehr[1],tmehr[length(tmehr)],"days")
-  doy <- as.numeric(strftime(tme, format = "%j"))
-  ndays<-length(doy)
+  doy <- unique(as.numeric(strftime(tmehr, format = "%j")))
+  ndays <- unique(paste(as.numeric(strftime(tmehr, format = "%j")),
+                        as.numeric(strftime(tmehr, format = "%y"))))
+  ndays <- length(ndays)
   doynum<-ndays
   ida<-ndays
   microdaily<-1
@@ -315,7 +316,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   RAINFALL1<-matrix(data=0,nrow=ndays,ncol=1)
   tannul1<-matrix(data=0,nrow=ndays,ncol=1)
   moists1<-matrix(data=0,nrow=10,ncol=ndays)
-  doy1[1:ndays]<-doy
   SLES1[1:ndays]<-SLES
   MAXSHADES1[1:ndays]<-MAXSHADES
   MINSHADES1[1:ndays]<-MINSHADES
@@ -682,6 +682,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
 runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE, windhgt = 2,
                       surfwet = 1, groundem = 0.95) {
   # (1) Unpack variables
+  tme<-as.POSIXlt(climdata$obs_time)
   tair<-climdata$temp
   relhum<-climdata$relhum
   pk<-climdata$pres
