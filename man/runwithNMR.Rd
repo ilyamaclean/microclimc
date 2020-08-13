@@ -4,13 +4,16 @@
 \alias{runwithNMR}
 \title{Runs microclimate model in hourly timesteps with NicheMapR}
 \usage{
-runwithNMR(climvars, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
+runwithNMR(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   slope = 0, aspect = 0, metopen = TRUE, windhgt = 2,
   surfwet = 1, groundem = 0.95, ERR = 1.5, cap = 1, hori = rep(0,
   36), maxpool = 1000, rainmult = 1, SoilMoist_Init = c(0.1, 0.12,
   0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3))
 }
 \arguments{
+\item{climdata}{data.frame of climate variables needed to run the run the model. The dataset should follow format
+of \code{\link[=weather]{weather()}}). Times must be in UTC.}
+
 \item{prec}{vector of hourly or daily precipitation (mm) (see details).}
 
 \item{vegp}{a list of vegetation parameters as returned by \code{\link[microctools:habitatvars]{microctools::habitatvars()}}.}
@@ -51,9 +54,6 @@ canopy.}
 \item{rainmult}{Rain multiplier for surface soil moisture (used to induce runon).}
 
 \item{SoilMoist_Init}{Initial volumetric soil water content at each soil node (m^3/m^3)}
-
-\item{climdata}{data.frame of climate variables needed to run the run the model. The dataset should follow format
-of \code{\link[=weather]{weather()}}). Times must be in UTC.}
 }
 \value{
 a list of two objects:
