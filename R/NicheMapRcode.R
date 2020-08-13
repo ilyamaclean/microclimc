@@ -147,8 +147,9 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   rad_dir<-climdata$swrad-climdata$difrad
   rad_ground<-si*dirtr*rad_dir+climdata$difrad*diftr
   MINSHADES<-(1-rad_ground/climdata$swrad)*100
-  MINSHADES[is.na(MINSHADES)]<-mean(MINSHADES,na.rm=T)
   MINSHADES[MINSHADES>99.9]<-99.9
+  MINSHADES[MINSHADES<0]<-0
+  MINSHADES[is.na(MINSHADES)]<-mean(MINSHADES,na.rm=T)
   MINSHADES<-matrix(MINSHADES,ncol=24,byrow=T)
   MINSHADES<-apply(MINSHADES,1,mean)
   intercept<-mean(MINSHADES)/100*0.3 # snow interception
