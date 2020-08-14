@@ -490,6 +490,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   LAI<-(vegp$pLAI*vegp$PAI)
   LAI<-apply(LAI,2,mean)
   pLAI<-LAI/PAIt
+  pLAI[is.na(pLAI)]<-0.8
   m<-length(vegp$iw)
   z<-c((1:m)-0.5)/m*hgt
   if (reqhgt < hgt) {
