@@ -554,6 +554,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     if (reqhgt > hgt) {
       tleaf2<-rep(-999,length(sbs))
     } else tleaf2<-snowtemp[sbs]
+    ws2<-rep(0,length(sbs))
   }
   if (reqhgt > hgt) {
     # Above snow
@@ -578,6 +579,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     }
     tz<-rep(0,length(uf))
     rh<-rep(0,length(uf))
+    ws<-rep(0,length(uf))
     tz[sas]<-tz1
     tz[sbs]<-tz2
     rh[sas]<-rh1
@@ -589,6 +591,8 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     Rswa[sbs]<-Rsw2
     Rlwa[sas]<-Rlw
     Rlwa[sbs]<-Rlw2
+    ws[sas]<-uz[sas]
+    ws[sbs]<-ws2
   } else {
     # Above snow
     if (length(sas)>0) {
@@ -630,6 +634,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     tz<-rep(0,length(uf))
     rh<-rep(0,length(uf))
     tleaf<-rep(0,length(uf))
+    ws<-rep(0,length(uf))
     tz[sas]<-tz1
     tz[sbs]<-tz2
     tleaf[sas]<-tleaf1
@@ -642,9 +647,11 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     Rswa[sbs]<-Rsw2
     Rlwa[sas]<-Rlw
     Rlwa[sbs]<-Rlw2
+    ws[sas]<-uz[sas]
+    ws[sbs]<-ws2
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
-                     RHref=relhum,RHloc=rh,RSWloc=Rswa,RLWloc=Rlwa)
+                     RHref=relhum,RHloc=rh,RSWloc=Rswa,RLWloc=Rlwa,windspeed=ws)
   return(metout)
 }
 #' Run model under steady state conditions
@@ -820,7 +827,7 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
     rh<-tln$rh
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
-                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw)
+                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
   # Consider snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
@@ -836,6 +843,7 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
     metout$RHloc[sel]<-mos$RHloc[sel]
     metout$RSWloc[sel]<-mos$RSWloc[sel]
     metout$RLWloc[sel]<-mos$RLWloc[sel]
+    metout$windspeed[sel]<-mos$windspeed[sel]
   }
   return(metout)
 }
