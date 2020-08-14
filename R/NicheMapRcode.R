@@ -487,6 +487,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   hgt<-vegp$hgt
   # Esimate PAIu
   PAIt<-apply(vegp$PAI,2,sum)
+  PAIt[PAIt<0.001]<-0.001
   LAI<-(vegp$pLAI*vegp$PAI)
   LAI<-apply(LAI,2,mean)
   pLAI<-LAI/PAIt
