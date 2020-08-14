@@ -330,7 +330,9 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   WNMINN1[1:ndays]<-WNMINN
   REFLS1[1:ndays]<-REFLS
   PCTWET1[1:ndays]<-PCTWET
-  RAINFALL1[1:ndays]<-RAINFALL
+  raind<-matrix(RAINhr,ncol=24,byrow=TRUE)
+  raind<-apply(raind,1,sum)
+  RAINFALL1[1:ndays]<-raind
   tannul1[1:ndays]<-tannul
   moists1[1:10, 1:ndays] <- moists
   tides<-matrix(data=0,nrow=24*ndays,ncol=3)
