@@ -198,7 +198,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   CLDhr[CLDhr>100]<-100
   WNhr<-climdata$windspeed
   WNhr[is.na(WNhr)]<-0.1
-  PRESShr<-climdata$pressure*1000
+  PRESShr<-climdata$pres*1000
   RAINFALL<-prec
   RAINFALL[RAINFALL<0.1]<-0
   ZENhr2<-ZENhr
