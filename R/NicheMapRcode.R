@@ -471,7 +471,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   return(list(tleaf=tleaf,tn=tn,rh=rh))
 }
 #' Internal function for running model with snow
-.runmodelsnow <- function(climdata, vegp, nmrout, reqhgt, lat, long, metopen = TRUE, windhgt = 2) {
+.runmodelsnow <- function(climdata, vegp, soilp, nmrout, reqhgt, lat, long, metopen = TRUE, windhgt = 2) {
   # Snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
@@ -661,6 +661,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
 #' under steady-state at one user specified height.
 #' @param climdata  data.frame of climate variables needed to run the run the model (dataset should follow format of [weather()])
 #' @param vegp a list of vegetation parameters as returned by [microctools::habitatvars()].
+#' @param soilp a list of soil parameters as returned by [soilinit()]
 #' @param nmrout a list of putputs from NicheMapR as returned by [runNMR()].
 #' @param reqhgt height (m) for which microclimate is needed.
 #' @param lat latitude of location (decimal degrees).
@@ -691,7 +692,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
 #' model with snow present. Should generally be run using wrapper function [runwithNMR()] but
 #' provided as a standalone function in case data for multiple heights are needed, in whihc case
 #' it can be run multiple times without also running NicheMapR.
-runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE, windhgt = 2,
+runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, Smax = 0.4, metopen = TRUE, windhgt = 2,
                       surfwet = 1, groundem = 0.95) {
   # (1) Unpack variables
   tme<-as.POSIXlt(climdata$obs_time)
@@ -702,6 +703,7 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
   hgt<-vegp$hgt
   # Esimate total PAI and proportion LAI
   PAIt<-apply(vegp$PAI,2,sum)
+  PAIt[PAIt<0.001]<-0.001
   LAI<-(vegp$pLAI*vegp$PAI)
   LAI<-apply(LAI,2,mean)
   pLAI<-LAI/PAIt
@@ -802,8 +804,10 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
     uh <- (uf/0.4)*ln2
     # Conductivities
     gta <- gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
-    gtc <- gcanopy(uh,hgt,vegp$hgtg,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
-    gt0 <- gcanopy(uh,vegp$hgtg,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtc <- gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtc[gtc<1]<-1
+    gt0 <- gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gt0[gt0<1]<-1
     gtt <- 1/(1/gta+1/gtc)
     gha <- 1.41*gforcedfree(vegp$lw*0.71,uz,tair,5,pk,5)
     # Radiation
@@ -838,7 +842,7 @@ runmodelS <- function(climdata, vegp, nmrout, reqhgt,  lat, long, metopen = TRUE
   mo<-nmrout$metout
   snowdep<-mo$SNOWDEP
   if (max(snowdep) > 0) {
-    mos <- .runmodelsnow(climdata,vegp,nmrout,reqhgt,lat,long,metopen,windhgt)
+    mos <- .runmodelsnow(climdata,vegp,soilp,nmrout,reqhgt,lat,long,metopen,windhgt)
     sel<-which(snowdep>0)
     metout$Tloc[sel]<-mos$Tloc[sel]
     metout$tleaf[sel]<-mos$tleaf[sel]
