@@ -1024,7 +1024,7 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tz,
                          tleaf=-999,RHref=relhum,RHloc=-999)
   } else if (reqhgt < (hgt+2)) {
-    metout <- runmodelS(climdata,vegp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
+    metout <- runmodelS(climdata,vegp,soilp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
   } else {
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tair,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
