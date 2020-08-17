@@ -4,13 +4,15 @@
 \alias{runmodelS}
 \title{Run model under steady state conditions}
 \usage{
-runmodelS(climdata, vegp, nmrout, reqhgt, lat, long, metopen = TRUE,
-  windhgt = 2, surfwet = 1, groundem = 0.95)
+runmodelS(climdata, vegp, soilp, nmrout, reqhgt, lat, long,
+  metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95)
 }
 \arguments{
 \item{climdata}{data.frame of climate variables needed to run the run the model (dataset should follow format of \code{\link[=weather]{weather()}})}
 
 \item{vegp}{a list of vegetation parameters as returned by \code{\link[microctools:habitatvars]{microctools::habitatvars()}}.}
+
+\item{soilp}{a list of soil parameters as returned by \code{\link[=soilinit]{soilinit()}}}
 
 \item{nmrout}{a list of putputs from NicheMapR as returned by \code{\link[=runNMR]{runNMR()}}.}
 
