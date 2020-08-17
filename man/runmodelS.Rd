@@ -4,7 +4,7 @@
 \alias{runmodelS}
 \title{Run model under steady state conditions}
 \usage{
-runmodelS(climdata, vegp, soilp, nmrout, reqhgt, lat, long, Smax = 0.4,
+runmodelS(climdata, vegp, soilp, nmrout, reqhgt, lat, long,
   metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95)
 }
 \arguments{

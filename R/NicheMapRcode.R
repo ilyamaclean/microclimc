@@ -692,7 +692,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
 #' model with snow present. Should generally be run using wrapper function [runwithNMR()] but
 #' provided as a standalone function in case data for multiple heights are needed, in whihc case
 #' it can be run multiple times without also running NicheMapR.
-runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, Smax = 0.4, metopen = TRUE, windhgt = 2,
+runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen = TRUE, windhgt = 2,
                       surfwet = 1, groundem = 0.95) {
   # (1) Unpack variables
   tme<-as.POSIXlt(climdata$obs_time)
@@ -717,9 +717,9 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, Smax = 
     wgt2<-abs(z[sel[1]-1]-reqhgt)
     sel2<-c(sel[1]-1,sel)
     PAIu1<-vegp$PAI[sel,]
-    PAIu1<-apply(PAIu1,2,sum)
+    if (length(sel) > 1) PAIu1<-apply(PAIu1,2,sum)
     PAIu2<-vegp$PAI[sel2,]
-    PAIu2<-apply(PAIu2,2,sum)
+    if (length(sel2) > 1) PAIu2<-apply(PAIu2,2,sum)
     PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
     dif<-abs(z-reqhgt)
     sel<-which(dif==min(dif))
