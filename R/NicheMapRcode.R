@@ -702,7 +702,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, Smax = 
   u<-climdata$windspeed
   hgt<-vegp$hgt
   # Ensure at least some PAI
-  veg$PAI[vegp$PAI<0.0001]<-0.0001
+  vegp$PAI[vegp$PAI<0.0001]<-0.0001
   # Esimate total PAI and proportion LAI
   PAIt<-apply(vegp$PAI,2,sum)
   LAI<-(vegp$pLAI*vegp$PAI)
