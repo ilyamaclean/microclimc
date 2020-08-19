@@ -198,7 +198,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   CLDhr[CLDhr>100]<-100
   WNhr<-climdata$windspeed
   WNhr[is.na(WNhr)]<-0.1
-  PRESShr<-climdata$pressure*1000
+  PRESShr<-climdata$pres*1000
   RAINFALL<-prec
   RAINFALL[RAINFALL<0.1]<-0
   ZENhr2<-ZENhr
@@ -354,7 +354,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (snowmodel == 1) {
     snow <- as.data.frame(microut$sunsnow)
   } else snow <- 0
-  if (max(metout[,1]==0)) stop("ERROR: the model crashed - try a different error tolerance spacing in DEP")
+  if (max(!is.na(metout[,1]==0))) stop("ERROR: the model crashed - try a different error tolerance spacing in DEP")
   return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant))
 }
 #' Internal function for calculating lead absorbed radiation on vector
@@ -1024,7 +1024,7 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tz,
                          tleaf=-999,RHref=relhum,RHloc=-999)
   } else if (reqhgt < (hgt+2)) {
-    metout <- runmodelS(climdata,vegp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
+    metout <- runmodelS(climdata,vegp,soilp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
   } else {
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tair,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
