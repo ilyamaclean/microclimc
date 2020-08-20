@@ -1008,7 +1008,7 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   BB = rep(4.5, 19)
   BD = rep(1.3, 19)
   DD = rep(2.65, 19)
-  nmrout<-runNMR(climdata,prec,lat,long,0.05,hgt,2,PAIt,vegp$x,pLAI,
+  nmrout<-runNMR(climdata,prec,lat,long,1.95,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
   if (reqhgt < 0) {
