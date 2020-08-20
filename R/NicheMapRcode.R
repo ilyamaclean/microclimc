@@ -720,7 +720,9 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
       if (length(sel) > 1) PAIu1<-apply(PAIu1,2,sum)
       PAIu2<-vegp$PAI[sel2,]
       if (length(sel2) > 1) PAIu2<-apply(PAIu2,2,sum)
-      PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+      if (length(wgt2) > 1) {
+        PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+      } else PAIu<-PAIu1
     } else {
       zu<-z[length(z)]
       wgt<-(hgt-reqhgt)/(hgt-zu)
