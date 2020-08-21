@@ -557,7 +557,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     } else tleaf2<-snowtemp[sbs]
     ws2<-rep(0,length(sbs))
   }
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     # Above snow
     if (length(sas)>0) {
       xx<-(H[sas]/(0.4*ph[sas]*cp[sas]*uf[sas]))
@@ -786,7 +786,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   uz<-.windprofile(u2,hgt+2,vegp$hgtg,a,hgt,PAIt,dba$psi_m)
   uf<-(0.4*u2)/(log((hgt+2-d)/zm)+dba$psi_m)
   uf[uf<0.1]<-0.1
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     xx<-(H/(0.4*ph*cp*uf))
     T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
     tmx<-tair+20
