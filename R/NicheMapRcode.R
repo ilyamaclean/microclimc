@@ -354,7 +354,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (snowmodel == 1) {
     snow <- as.data.frame(microut$sunsnow)
   } else snow <- 0
-  if (max(!is.na(metout[,1]==0))) stop("ERROR: the model crashed - try a different error tolerance spacing in DEP")
   return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant))
 }
 #' Internal function for calculating lead absorbed radiation on vector
@@ -558,7 +557,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
     } else tleaf2<-snowtemp[sbs]
     ws2<-rep(0,length(sbs))
   }
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     # Above snow
     if (length(sas)>0) {
       xx<-(H[sas]/(0.4*ph[sas]*cp[sas]*uf[sas]))
@@ -721,14 +720,16 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
       if (length(sel) > 1) PAIu1<-apply(PAIu1,2,sum)
       PAIu2<-vegp$PAI[sel2,]
       if (length(sel2) > 1) PAIu2<-apply(PAIu2,2,sum)
-      PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+      if (length(wgt2) > 1) {
+        PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+      } else PAIu<-PAIu1
     } else {
       zu<-z[length(z)]
       wgt<-(hgt-reqhgt)/(hgt-zu)
       PAIu<-wgt*vegp$PAI[length(z),]
     }
     dif<-abs(z-reqhgt)
-    sel<-which(dif==min(dif))
+    sel<-which(dif==min(dif))[1]
     leafdens<-vegp$PAI[sel,]/(z[2]-z[1])
   } else PAIu<-rep(0,length(PAIt))
   # (2) Estimate Sensible Heat flux
@@ -785,7 +786,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   uz<-.windprofile(u2,hgt+2,vegp$hgtg,a,hgt,PAIt,dba$psi_m)
   uf<-(0.4*u2)/(log((hgt+2-d)/zm)+dba$psi_m)
   uf[uf<0.1]<-0.1
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     xx<-(H/(0.4*ph*cp*uf))
     T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
     tmx<-tair+20
@@ -1008,7 +1009,7 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   BB = rep(4.5, 19)
   BD = rep(1.3, 19)
   DD = rep(2.65, 19)
-  nmrout<-runNMR(climdata,prec,lat,long,0.05,hgt,2,PAIt,vegp$x,pLAI,
+  nmrout<-runNMR(climdata,prec,lat,long,1.95,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
   if (reqhgt < 0) {
