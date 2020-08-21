@@ -729,7 +729,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
       PAIu<-wgt*vegp$PAI[length(z),]
     }
     dif<-abs(z-reqhgt)
-    sel<-which(dif==min(dif))
+    sel<-which(dif==min(dif))[1]
     leafdens<-vegp$PAI[sel,]/(z[2]-z[1])
   } else PAIu<-rep(0,length(PAIt))
   # (2) Estimate Sensible Heat flux
