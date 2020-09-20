@@ -437,6 +437,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   es<-satvap(tair, ice = TRUE)
   eref <- (relhum/100)*es
   rhsoil<-soilrh(theta,soilb,Psie,Smax,tground)
+  rhsoil[rhsoil>100]<-100
   esoil<-rhsoil*satvap(tground, ice = TRUE)
   delta <- 4098*(0.6108*exp(17.27*tair/(tair+237.3)))/(tair+237.3)^2
   ae<-(gtt*eref+gt0*esoil+gv*es)/(gtt+gt0+gv)
@@ -467,6 +468,8 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   # Set both tair and tleaf so as not to drop below dewpoint
   tleaf<-ifelse(tleaf<tmin,tmin,tleaf)
   tn<-ifelse(tn<tmin,tmin,tn)
+  tmax<-ifelse(tn+20<80,tn+20,80)
+  tleaf<-ifelse(tleaf>tmax,tmax,tleaf)
   return(list(tleaf=tleaf,tn=tn,rh=rh))
 }
 #' Internal function for running model with snow
