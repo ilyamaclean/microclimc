@@ -713,7 +713,6 @@ tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
 prec <- dailyprecipNCEP(lat = 50, long = -5, tme)
 vegp <- habitatvars(4, lat = 50, long = -5, tme, m = 20)
 soilp<- soilinit("Loam")
-source("R/NicheMapRcode.R")
 # Run model in hourly timesteps for a year using weather dataset included with the package
 dataout <- runwithNMR(weather, prec, vegp, soilp, reqhgt = 2, lat = 50, long = -5)
 metout <- dataout$metout
