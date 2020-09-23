@@ -1,6 +1,6 @@
 ---
 title: "Running microclim c"
-author: "Ilya Maclean"
+author: "Ilya Maclean, David Klinges"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
@@ -15,6 +15,45 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
+* [Introduction](#introduction)
+
+* [Wind](#wind)
+  + [Above Canopy](#above-canopy)
+  + [Below Canopy](#below-canopy)
+  
+* [Vegetation geometry](#vegetation-geometry)  
+  + [Generating plant area index profiles](#generating-plant-area-index-profiles)
+  + [Generating vegetation thickness profiles](#generating-vegetation-thickness-profiles)
+  + [Generating fraction of green leaves profiles](#generating-fraction-of-green-leaves-profiles) 
+  + [Generating relative turbulence intensity profiles](#generating-relative-turbulence-intensity-profiles) 
+  + [Generating total plant area index from a habitat category](#generating-total-plant-area-index-from-a-habitat-category) 
+
+* [Radiation](#radiation)
+  + [Incoming diffuse radiation](#incoming-diffuse-radiation)
+  + [Incoming direct radiation](#incoming-direct-radiation)
+  + [Longwave radiation](#longwave-radiation)
+  + [Absorbed and emitted radiation](#absorbed-and-emitted-radiation)
+  
+* [Conduction](#conduction)
+  + [Conduction under laminer convection](#conduction-under-laminer-convection)
+  + [Conduction under turbulent convection above canopy](#conduction-under-turbulent-convection-above-canopy)
+  + [Conduction under turbulent convection below canopy](#conduction-under-turbulent-convection-below-canopy)
+  + [Stomatal conductance](#stomatal-conductance)
+  
+* [Temperature](#temperature)
+  + [Air temperature above canopy](#air-temperature-above-canopy)
+  + [Leaf and sub-canopy air temperature](#leaf-and-sub-canopy-air-temperature)
+  + [Soil temperature](#soil-temperature)
+  
+* [Humidity and latent heat exchange](#humidity-and-latent-heat-exchange)
+
+* [Running the model](#running-the-model)
+  + [One Time Step](#one-time-step)
+  + [Model Spin-up](#model-spin-up)
+  + [Multiple timesteps: running the model in transient mode](#multiple-timesteps-running-the-model-in-transient-mode)
+  + [Multiple timesteps: running the model in steady-state mode](#multiple-timesteps-running-the-model-in-steady-state-mode)
+
+  
 ## Introduction
 This vignette describes the R package ‘microclimc’. In conjunction with `microctools`, the package contains a series of functions for modelling microclimate from first principles, below or above vegetated canopies and in the soil. The core assumption is that local anomalies from standard reference temperature or humidity, for example weather station data, can be modelled using the mechanistic processes that govern heat and vapour exchange.
 The modelling of temperatures above canopy is performed using classic one-dimensional diffusion theory (also known as K-theory). It is assumed that air does not absorb or emit radiation, but that the canopy itself does. The air immediately above the canopy is influenced by convective heat exchange with canopy. This in turn is governed by turbulent transport, whereby conductivity between the canopy and the air above it is determined by the shape of the wind profile, itself dependent on vegetation roughness as well as the wind speed at some measurable height.
@@ -177,7 +216,7 @@ iw<- iwgeometry(100)
 plot(z~iw, type = "l", lwd = 2, col = "red")
 ```
 
-### Generating total plant area index from habitat
+### Generating total plant area index from a habitat category
 Plant Area Index (the total one-sided plant area per unit ground area) is one of the key determinants of below-canopy microclimates, but typically varies seasonally. This function generates realistic seasonal cylces in plant area index for a suite of broad habitat types calibrated against MODIS data. The habitats are as follows:
 ```{r}
 library(microctools)
@@ -202,7 +241,7 @@ pxh$height
 pxh$x
 ```
 
-### Generating all vegetation parameters from habitat
+### Generating all vegetation parameters from a habitat category
 It is also possible to generate all the parameters needed to run the model from habitat type,
 with the user specifying the period over which parameters are needed (so that realistic seasonal cyles can be simulated) and the number of canopy nodes. For example:
 
@@ -624,10 +663,12 @@ modelout<-spinup(weather, vegp, soilp, lat = 50, long = -5, steps = 50)
 
 By leaving the input plotout at its default (TRUE) a soil, below-canopy and above-canopy air temperature profile (red) and leaf temperature profile (green) are plotted at the end.
 
-### Running the model in time-steps
-To run the model of multiple timesteps the `runmodel` function is used. There are various ways in which data can be extracted for each time-step. If the input parameter `reqhgt` is set, and below the height of the canopy, the canopy node nearest to that height is set at the value specified. The returned values `tout` (air temperature), `tleaf` (leaf temperature), `relhum` (relative humidity), `L` (Latent heat flux), `Swin` (Incoming shortwave) and Lwin (incoming - i.e. re-emitted lognwave) are then the values at that height. If `reqhgt` is above canopy, nodes are calculated automatically, and `tout` and `relhum` are the temperature and relative humidity at height `reqhgt`, `SWin` and `LWin` the values above canopy, `tleaf` the mean leaf temperature and `L` the summed latent heat exchange for the entire canopy. If `reqhgt` is negative, the soil node nearest to that height is set at the value specified, `tout` is soil temperature at that node, `tleaf`, `relhum`, `Swin` and `Lwin` are the mean values for the whole canopy. If `reqhgt` is not set, `tout`, `tleaf`, `relhum`, `SWin` and `LWin` are mean values for the whole canopy. 
+### Multiple timesteps: running the model in transient mode
+The model can be run in two possible timeseries modes: transient and steady-state. The transient mode is beneficial for applications in which very fine-temporal resolution data might be needed, however when hourly increments or greater are all that is necessary the steady-state model (see below) is faster. In the transient mode, heat and vapour exchange are modelled as transient processes, and heat storage by the canopy, and the exchange of heat between different layers of the canopy are considered explicitly. 
 
-The start and end dates for running the model, and the time steps are automatically determined from input `climdata` data.frame, in this case the inbuilt `weather` dataset. User specified input datasets should use the same format and column names as `weather`. The `hourly_ncep` function in the microclima package is a function that retrieves climate forcing data needed to run the model for any location on earth. Outputs from this function can be reformatted for use with the microclimc package using the function `hourlyncep_convert` in the  microctools package.  
+For the transient mode, the `runmodel` function is used. There are various ways in which data can be extracted for each time-step. If the input parameter `reqhgt` is set, and below the height of the canopy, the canopy node nearest to that height is set at the value specified. The returned values `tout` (air temperature), `tleaf` (leaf temperature), `relhum` (relative humidity), `L` (Latent heat flux), `Swin` (Incoming shortwave) and Lwin (incoming - i.e. re-emitted lognwave) are then the values at that height. If `reqhgt` is above canopy, nodes are calculated automatically, and `tout` and `relhum` are the temperature and relative humidity at height `reqhgt`, `SWin` and `LWin` the values above canopy, `tleaf` the mean leaf temperature and `L` the summed latent heat exchange for the entire canopy. If `reqhgt` is negative, the soil node nearest to that height is set at the value specified, `tout` is soil temperature at that node, `tleaf`, `relhum`, `Swin` and `Lwin` are the mean values for the whole canopy. If `reqhgt` is not set, `tout`, `tleaf`, `relhum`, `SWin` and `LWin` are mean values for the whole canopy. 
+
+The start and end dates for running the model, and the time steps are automatically determined from input `climdata` data.frame, in this case the inbuilt `weather` dataset. User specified input datasets should use the same format and column names as `weather`. The `hourly_ncep` function in the microclima package is a function that retrieves climate forcing data needed to run the model for any location on earth. Outputs from this function can be reformatted for use with the microclimc package using the function `hourlyncep_convert` in the microctools package.  
 
 ```{r eval=FALSE}
 library(microclimc)
@@ -655,4 +696,39 @@ plot(reftemp~as.POSIXct(obs_time), data = dataout, type = "l", col = rgb(0,0,0,0
 
 
 Here below canopy mean (at all heights) hourly air (red) and leaf (green) temperature for an entire year are shown overlying reference air temperature at two metres height (grey).
+
+### Multiple timesteps: running the model in steady-state mode
+
+In the steady-state mode - for predictions at time increments of an hour or longer - below canopy heat and vapour exchange are assumed to attain steady state, and the temperatures and moisture are determined using energy balance equations that sum to zero. The user specifies a height within the canopy and either above or below canopy, and the leaf area above this point and for the canopy in total must be specified. As in the transient mode, above canopy, temperature, humidity and wind profiles are calculated using K-theory with estimates of bulk aerodynamic resistance derived from canopy properties. Within the canopy, radiation transmission and wind profiles are estimated for canopy properties. These, in turn, are used to estimate turbulent transfer within the canopy and boundary layer and stomatal conductance for each canopy layer. Heat balance equations for each canopy layer are then linearized, enabling simultaneous calculation of leaf and air temperatures. Time-dependent differential equations for each canopy and soil node are then specified, and storage and simultaneous exchanges of heat and vapour between each layer are then computed. In the transient mode, storage is considered both within soil and canopy, but in the steady-state mode, only storage in the soil is considered. The model returns a time-series of temperature, humidity and wind speeds at user-specified heights or depths. In this latter mode, the model has been integrated with the NicheMapR package (Kearney & Porter, 2017) and uses the rapid processing capacity of Fortran routines therein to compute soil moisture and temperature. 
+
+For steady-state mode, the function `runwithNMR` is used. Much as with `runmodel`, a data frame of climate-forcing variables is provided as the 'climdata' argument, along with vegetation parameters (`vegp`) and soil parameters (`soilp`), a required height at which to predict (`reqhgt`), and the point `lat` and `long`. `runwithNMR` also requires a vector of hourly or daily precipitation observations as `prec`, which are used to estimate soil moisture. Here, of convenience is borrowing the function `dailyprecipNCEP` from the `microclima` package to obtain daily precipitation values:
+
+
+```{r eval=FALSE}
+library(microclimc)
+library(microctools)
+library(microclima)
+library(NicheMapR)
+tme<-as.POSIXlt(weather$obs_time, format = "%Y-%m-%d %H:%M", tz = "UTC")
+prec <- dailyprecipNCEP(lat = 50, long = -5, tme)
+vegp <- habitatvars(4, lat = 50, long = -5, tme, m = 20)
+soilp<- soilinit("Loam")
+# Run model in hourly timesteps for a year using weather dataset included with the package
+dataout <- runwithNMR(weather, prec, vegp, soilp, reqhgt = 2, lat = 50, long = -5)
+metout <- dataout$metout
+# Plot results:
+par(mfrow=c(2,1))
+plot(Tloc~as.POSIXct(obs_time), data = metout, type = "l", col = "red",
+     xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
+par(new=T)
+plot(Tref~as.POSIXct(obs_time), data = metout, type = "l", col = rgb(0,0,0,0.5),
+     xlab = "", ylab = "Temperature", ylim = c(-10, 35), main = "Air temperature")
+plot(tleaf~as.POSIXct(obs_time), data = metout, type = "l", col = "darkgreen",
+     xlab = "Month", ylab = "Temperature", ylim = c(-10, 35))
+par(new=T)
+plot(Tref~as.POSIXct(obs_time), data = metout, type = "l", col = rgb(0,0,0,0.5),
+     xlab = "", ylab = "", ylim = c(-10, 35), main = "Leaf temperature")
+```
+
+![](images/plot2.png)\
 
