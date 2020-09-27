@@ -463,6 +463,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   eanew<-ae+be*dTL
   esnew<-satvap(tn, ice = TRUE)
   eanew<-ifelse(eanew>esnew,esnew,eanew)
+  eanew[eanew<0.01]<-0.01
   rh<-(eanew/esnew)*100
   tmin<-dewpoint(eanew,tn,ice = TRUE)
   # Set both tair and tleaf so as not to drop below dewpoint
