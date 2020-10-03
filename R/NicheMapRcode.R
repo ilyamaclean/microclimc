@@ -863,10 +863,10 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     metout$RLWloc[sel]<-mos$RLWloc[sel]
     metout$windspeed[sel]<-mos$windspeed[sel]
   }
-  # Cap at theoretical upper limits
+  # Cap at theoretical upper limits, plus some wiggle room
   mt<-max(tground,na.rm=T)
-  metout$Tloc[metout$Tloc>mt]<-mt
-  metout$tleaf[metout$tleaf>mt]<-mt
+  metout$Tloc[metout$Tloc>mt+10]<-mt
+  metout$tleaf[metout$tleaf>mt+10]<-mt
   return(metout)
 }
 #' Runs microclimate model in hourly timesteps with NicheMapR
