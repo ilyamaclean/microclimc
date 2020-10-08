@@ -184,7 +184,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   ZENhr[ZENhr>90]<-90
   TAIRhr<-climdata$temp
   SOLRhr<-climdata$swrad*VIEWF
-  SOLRhr[SOLRhr<0]<-0
   sb<-5.67*10^-8
   IRDhr<-climdata$skyem*sb*(climdata$temp+273.15)^4
   RHhr<-climdata$relhum
