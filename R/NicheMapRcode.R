@@ -184,7 +184,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   ZENhr[ZENhr>90]<-90
   TAIRhr<-climdata$temp
   SOLRhr<-climdata$swrad*VIEWF
-  SOLRhr[SOLRhr<0]<-0
   sb<-5.67*10^-8
   IRDhr<-climdata$skyem*sb*(climdata$temp+273.15)^4
   RHhr<-climdata$relhum
@@ -437,7 +436,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   es<-satvap(tair, ice = TRUE)
   eref <- (relhum/100)*es
   rhsoil<-soilrh(theta,soilb,Psie,Smax,tground)
-  rhsoil[rhsoil>100]<-100
+  #rhsoil[rhsoil>1]<-1
   esoil<-rhsoil*satvap(tground, ice = TRUE)
   delta <- 4098*(0.6108*exp(17.27*tair/(tair+237.3)))/(tair+237.3)^2
   ae<-(gtt*eref+gt0*esoil+gv*es)/(gtt+gt0+gv)
@@ -461,10 +460,11 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   tleaf<-tn+dTL
   # new vapour pressure
   eanew<-ae+be*dTL
+  tmin<-dewpoint(eanew,tn,ice = TRUE)
   esnew<-satvap(tn, ice = TRUE)
   eanew<-ifelse(eanew>esnew,esnew,eanew)
+  eanew[eanew<0.01]<-0.01
   rh<-(eanew/esnew)*100
-  tmin<-dewpoint(eanew,tn,ice = TRUE)
   # Set both tair and tleaf so as not to drop below dewpoint
   tleaf<-ifelse(tleaf<tmin,tmin,tleaf)
   tn<-ifelse(tn<tmin,tmin,tn)
