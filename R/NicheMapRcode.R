@@ -460,10 +460,10 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   tleaf<-tn+dTL
   # new vapour pressure
   eanew<-ae+be*dTL
+  eanew[eanew<0.01]<-0.01
   tmin<-dewpoint(eanew,tn,ice = TRUE)
   esnew<-satvap(tn, ice = TRUE)
   eanew<-ifelse(eanew>esnew,esnew,eanew)
-  eanew[eanew<0.01]<-0.01
   rh<-(eanew/esnew)*100
   # Set both tair and tleaf so as not to drop below dewpoint
   tleaf<-ifelse(tleaf<tmin,tmin,tleaf)
