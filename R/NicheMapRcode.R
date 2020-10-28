@@ -789,11 +789,14 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   uz<-.windprofile(u2,hgt+2,vegp$hgtg,a,hgt,PAIt,dba$psi_m)
   uf<-(0.4*u2)/(log((hgt+2-d)/zm)+dba$psi_m)
   uf[uf<0.1]<-0.1
+  xx<-(H/(0.4*ph*cp*uf))
+  T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
+  xx<-(H/(0.4*ph*cp*uf))
+  T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
+  tmx<-tair+20
+  T0<-ifelse(T0>tmx,tmx,T0)
+  T0<-ifelse(T0>80,80,T0)
   if (reqhgt >= hgt) {
-    xx<-(H/(0.4*ph*cp*uf))
-    T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
-    tmx<-tair+20
-    T0<-ifelse(T0>tmx,tmx,T0)
     ea<-satvap(tair,ice=T)*(relhum/100)
     tmn<-pmax(dewpoint(ea,tair),tair-5)
     T0<-ifelse(T0<tmn,tmn,T0)
@@ -841,6 +844,8 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
                 soilp$Smax,surfwet,leafdens)
     tleaf<-tln$tleaf
     tz<-tln$tn
+    tleaf<-pmin(tleaf,T0)
+    tz<-pmin(tz,T0)
     rh<-tln$rh
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
@@ -866,6 +871,11 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   mt<-max(tground,na.rm=T)
   metout$Tloc[metout$Tloc>mt+10]<-mt
   metout$tleaf[metout$tleaf>mt+10]<-mt
+  # Cap so that below canopy temps can't drop too low
+  mn1<-climdata$temp-6
+  mn2<-climdata$temp-10
+  metout$Tloc<-pmax(metout$Tloc,mn1)
+  metout$tleaf<-pmax(metout$tleaf,mn2)
   return(metout)
 }
 #' Runs microclimate model in hourly timesteps with NicheMapR
