@@ -428,6 +428,11 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 #' @export
 tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, vegem, soilb,
                    Psie, Smax, surfwet, leafdens) {
+  vegem=vegp$vegem
+  soilb=soilp$b
+  Psie=soilp$psi_e
+  Smax=soilp$Smax
+  ###
   cp<-cpair(tair)
   # Air temperature expressed as leaf temperature
   aL<-(gtt*(tair+273.15)+gt0*(tground+273.15))/(gtt+gt0)
@@ -436,7 +441,6 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   es<-satvap(tair, ice = TRUE)
   eref <- (relhum/100)*es
   rhsoil<-soilrh(theta,soilb,Psie,Smax,tground)
-  #rhsoil[rhsoil>1]<-1
   esoil<-rhsoil*satvap(tground, ice = TRUE)
   delta <- 4098*(0.6108*exp(17.27*tair/(tair+237.3)))/(tair+237.3)^2
   ae<-(gtt*eref+gt0*esoil+gv*es)/(gtt+gt0+gv)
@@ -470,6 +474,14 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   tn<-ifelse(tn<tmin,tmin,tn)
   tmax<-ifelse(tn+20<80,tn+20,80)
   tleaf<-ifelse(tleaf>tmax,tmax,tleaf)
+  # cap upper limits of both tair and tleaf
+  tmx<-pmax(tground+5,tair+5)
+  tn<-ifelse(tn>tmx,tmx,tn)
+  tleaf<-ifelse(tleaf>tmx,tmx,tleaf)
+  # cap lower limits
+  tmn<-tair-7
+  tn<-ifelse(tn<tmn,tmn,tn)
+  tleaf<-ifelse(tleaf<tmn,tmn,tleaf)
   return(list(tleaf=tleaf,tn=tn,rh=rh))
 }
 #' Internal function for running model with snow
@@ -541,7 +553,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   uz2<-.windprofile(u2,snowdep+2,reqhgt,a2,0,0,dba$psi_m)
   uz<-ifelse(hgt>snowdep,uz1,uz2)
   uf<-(0.4*u2)/(log((hgt2+2-d)/zm)+dba$psi_m)
-  uf[uf<0.1]<-0.1
+  uf[uf<0.065]<-0.065
   sas <- which(reqhgt>=snowdep)
   sbs <- which(reqhgt<snowdep)
   # Below snow
@@ -788,18 +800,18 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   a<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
   uz<-.windprofile(u2,hgt+2,vegp$hgtg,a,hgt,PAIt,dba$psi_m)
   uf<-(0.4*u2)/(log((hgt+2-d)/zm)+dba$psi_m)
-  uf[uf<0.1]<-0.1
+  uf[uf<0.065]<-0.065
   xx<-(H/(0.4*ph*cp*uf))
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
   xx<-(H/(0.4*ph*cp*uf))
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
-  tmx<-tair+20
+  tmn<-pmax(dewpoint(ea,tair),tair-5)
+  T0<-ifelse(T0<tmn,tmn,T0)
+  tmx<-pmax(tair+20,tground)
   T0<-ifelse(T0>tmx,tmx,T0)
   T0<-ifelse(T0>80,80,T0)
   if (reqhgt >= hgt) {
     ea<-satvap(tair,ice=T)*(relhum/100)
-    tmn<-pmax(dewpoint(ea,tair),tair-5)
-    T0<-ifelse(T0<tmn,tmn,T0)
     psihe<-(T0-tair)/xx-log((hgt+2-d)/(0.2*zm))
     rat<-log((reqhgt-d)/(0.2*zm))/log((hgt+2-d)/(0.2*zm))
     psihe<-rat*psihe
@@ -850,6 +862,12 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
                      RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
+  # Cap at theoretical upper and lower limits
+  mx<-pmax(tground,T0)
+  mn<-pmin(tground,tair-7)
+  metout$Tloc[metout$Tloc>mx]<-mx
+  metout$tleaf[metout$tleaf>mx]<-mx
+  metout$Tloc[metout$Tloc<mn]<-mn
   # Consider snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
@@ -867,15 +885,6 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     metout$RLWloc[sel]<-mos$RLWloc[sel]
     metout$windspeed[sel]<-mos$windspeed[sel]
   }
-  # Cap at theoretical upper limits, plus some wiggle room
-  mt<-max(tground,na.rm=T)
-  metout$Tloc[metout$Tloc>mt+10]<-mt
-  metout$tleaf[metout$tleaf>mt+10]<-mt
-  # Cap so that below canopy temps can't drop too low
-  mn1<-climdata$temp-6
-  mn2<-climdata$temp-10
-  metout$Tloc<-pmax(metout$Tloc,mn1)
-  metout$tleaf<-pmax(metout$tleaf,mn2)
   return(metout)
 }
 #' Runs microclimate model in hourly timesteps with NicheMapR
