@@ -805,13 +805,13 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
   xx<-(H/(0.4*ph*cp*uf))
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
+  ea<-satvap(tair,ice=T)*(relhum/100)
   tmn<-pmax(dewpoint(ea,tair),tair-5)
   T0<-ifelse(T0<tmn,tmn,T0)
   tmx<-pmax(tair+20,tground)
   T0<-ifelse(T0>tmx,tmx,T0)
   T0<-ifelse(T0>80,80,T0)
   if (reqhgt >= hgt) {
-    ea<-satvap(tair,ice=T)*(relhum/100)
     psihe<-(T0-tair)/xx-log((hgt+2-d)/(0.2*zm))
     rat<-log((reqhgt-d)/(0.2*zm))/log((hgt+2-d)/(0.2*zm))
     psihe<-rat*psihe
