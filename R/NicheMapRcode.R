@@ -865,9 +865,10 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   # Cap at theoretical upper and lower limits
   mx<-pmax(tground,T0)
   mn<-pmin(tground,tair-7)
-  metout$Tloc[metout$Tloc>mx]<-mx
-  metout$tleaf[metout$tleaf>mx]<-mx
-  metout$Tloc[metout$Tloc<mn]<-mn
+  metout$Tloc[metout$Tloc>mx]<-mx[metout$Tloc>mx]
+  metout$tleaf[metout$tleaf>mx]<-mx[metout$tleaf>mx]
+  metout$Tloc[metout$Tloc<mn]<-mn[metout$Tloc<mn]
+  metout$tleaf[metout$tleaf<mn]<-mn[metout$tleaf<mn]
   # Consider snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
