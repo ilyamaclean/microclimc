@@ -428,10 +428,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 #' @export
 tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, vegem, soilb,
                    Psie, Smax, surfwet, leafdens) {
-  vegem=vegp$vegem
-  soilb=soilp$b
-  Psie=soilp$psi_e
-  Smax=soilp$Smax
   ###
   cp<-cpair(tair)
   # Air temperature expressed as leaf temperature
