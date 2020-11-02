@@ -284,11 +284,10 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
     raintest<-RAINhr
   } else if (length(prec) == length(TAIRhr)/24) {
     rainhourly<-0
-    RAINhr<-rep(0,24*ndays)
-    raintest<-rep(prec/24,each=24)
+    RAINhr<-rep(prec/24,each=24)
   } else stop("Rainfall must be daily or hourly")
   # Decide whether to run snowmodel
-  snowtest<-ifelse(TAIRhr>0,0,-TAIRhr)*raintest
+  snowtest<-ifelse(TAIRhr>0,0,-TAIRhr)*RAINhr
   snowmodel <- 0
   if (max(snowtest)>0) snowmodel<-1
   RUF<-roughlength(Veghyt,mean(PAI),0.0003)
