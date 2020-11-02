@@ -494,7 +494,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     snowtemp<-snow$SN1
   } else snowtemp<-rep(0,length(L))
   metout<-nmrout$metout
-  snowdep<-metout$SNOWDEP
+  snowdep<-metout$SNOWDEP/100
   # (1) Unpack variables
   tair<-climdata$temp
   relhum<-climdata$relhum
@@ -535,27 +535,19 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   u2[u2<0.5]<-0.5
   cp<-cpair(tair)
   ph<-phair(tair,pk)
-  sb<-5.67*10^-8
-  Rsw<-0.06*climdata$swrad
-  Rlw<-(1-climdata$skyem)*sb*0.85*(snowtemp+273.15)^4
-  Rnet<-Rsw-Rlw
-  H<-0.65*Rnet
-  # Calculate diabatic correction factor
   zm<-ifelse(hgt>snowdep,roughlength(hgt, PAIt),0.003)
   d<-ifelse(hgt>snowdep,zeroplanedis(hgt, PAIt),snowdep-0.003)
+  zh<-0.2*zm
   hgt2<-ifelse(hgt>snowdep,hgt,snowdep)
-  uf <- (0.4*u2)/log((2+hgt2-d)/zm)
-  dba <- diabatic_cor(tair,pk,H,uf,hgt+2,d)
-  dba$psi_m<-ifelse(dba$psi_m>2.5,2.5,dba$psi_m)
-  dba$psi_m<-ifelse(dba$psi_h>2.5,2.5,dba$psi_h)
-  # Wind speed at user height
   a1<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
   a2<-attencoef(hgt,0,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
-  uz1<-.windprofile(u2,hgt+2,reqhgt,a1,hgt,PAIt,dba$psi_m)
-  uz2<-.windprofile(u2,snowdep+2,reqhgt,a2,0,0,dba$psi_m)
+  uz1<-.windprofile(u2,hgt+2,reqhgt,a1,hgt,PAIt)
+  uz2<-.windprofile(u2,snowdep+2,reqhgt,a2,0,0)
   uz<-ifelse(hgt>snowdep,uz1,uz2)
-  uf<-(0.4*u2)/(log((hgt2+2-d)/zm)+dba$psi_m)
+  uf<-(0.4*u2)/log((hgt2+2-d)/zm)
   uf[uf<0.065]<-0.065
+  hgt2<-ifelse(hgt<snowdep,snowdep,hgt)
+  uh<-(uf/0.4)*log((hgt2-d)/zm)
   sas <- which(reqhgt>=snowdep)
   sbs <- which(reqhgt<snowdep)
   # Below snow
@@ -569,107 +561,73 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rsw2<-rep(0,length(tz2))
     Rlw2<-5.67*10^-8*0.85*(snowtemp+273.15)^4
     Rlw2<-Rlw2[sbs]
-    if (reqhgt > hgt) {
-      tleaf2<-rep(-999,length(sbs))
-    } else tleaf2<-snowtemp[sbs]
-    ws2<-rep(0,length(sbs))
+    tleaf2<-snowtemp[sbs]
   }
-  if (reqhgt >= hgt) {
-    # Above snow
-    if (length(sas)>0) {
-      xx<-(H[sas]/(0.4*ph[sas]*cp[sas]*uf[sas]))
-      T0<-snowtemp[sas]
-      psihe<-(T0-tair[sas])/xx-log((hgt+2-d[sas])/(0.2*zm[sas]))
-      rat<-log((reqhgt-d[sas])/(0.2*zm[sas]))/log((hgt+2-d[sas])/(0.2*zm[sas]))
-      psihe<-rat*psihe
-      tz1<-T0-xx*(log((reqhgt-d[sas])/(0.2*zm[sas]))+psihe)
-      tmx<-pmax(tair[sas],T0)
-      tmn<-pmin(tair[sas],T0)
-      tz1<-ifelse(tz1>tmx,tmx,tz1)
-      tz1<-ifelse(tz1<tmn,tmn,tz1)
-      ea<-satvap(tair[sas])*(relhum[sas]/100)
-      rh1<-(ea/satvap(tz1))*100
-      Rsw<-climdata$swrad
-      Rlw<-5.67*10^-8*climdata$skyem*(tair+273.15)^4
-      Rsw<-Rsw[sas]
-      Rlw<-Rlw[sas]
-      tleaf1<-rep(-999,length(sas))
-    }
-    tz<-rep(0,length(uf))
-    rh<-rep(0,length(uf))
-    ws<-rep(0,length(uf))
-    tz[sas]<-tz1
-    tz[sbs]<-tz2
-    rh[sas]<-rh1
-    rh[sbs]<-rh2
-    tleaf<-rep(-999,length(tz))
-    Rswa<-rep(0,length(uf))
-    Rlwa<-rep(0,length(uf))
-    Rswa[sas]<-Rsw
-    Rswa[sbs]<-Rsw2
-    Rlwa[sas]<-Rlw
-    Rlwa[sbs]<-Rlw2
-    ws[sas]<-uz[sas]
-    ws[sbs]<-ws2
+  # Calculate things that are common to below and above
+  leafdens<-(PAIt/hgt)*1.2
+  dp<-climdata$difrad/climdata$swrad
+  dp[is.na(dp)]<-0.5
+  dp[is.infinite(dp)]<-0.5
+  dp[dp>1]<-1
+  gtt<-gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,pk=pk)
+  # Above canopy
+  if (reqhgt > hgt) {
+    # Calculate conductivities
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
+    gha<-1.41*gforcedfree(vegp$lw*2*0.71,uh,tair,5,pk,5)
+    gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
+    gv<-1/(1/gC+1/gha)
+    gtz<-phair(tair)*uh
+    gL<-1/(1/gha+1/gtz)
+    # Calculate absorbed radiation
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
+                    0.95,0.85,climdata$skyem,dp,vegp$clump)
+    Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,0.85,soilp$b,
+               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+    tn<-Th$tn
+    tleaf<-Th$tleaf
+    # Calculate temperature and relative humidity at height z
+    gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,pk=pk)
+    gt2<-1/(1/gtt-1/gtc)
+    eref<-(relhum/100)*satvap(tair)
+    ecan<-(Th$rh/100)*satvap(tn)
+    ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
+    tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
+    rh<-(ea/satvap(tz))*100
+    rh[rh>100]<-100
+    Rsw<-climdata$swrad
+    sb<-5.67*10^-8
+    Rlw<-(1-climdata$skyem)*0.85*sb*(tz+273.15)^4
   } else {
-    # Above snow
-    if (length(sas)>0) {
-      ln2 <- suppressWarnings(log((hgt-d[sas])/zm[sas])+dba$psi_m[sas])
-      ln2[ln2<0.55]<-0.55
-      uh <- (uf[sas]/0.4)*ln2
-      # Conductivities
-      gta <- gturb(u2[sas],hgt+2,hgt+2,hgt,hgt,PAIt[sas],tair[sas],dba$psi_m[sas],dba$psi_h[sas],0.004,pk[sas])
-      gtc <- gcanopy(uh,hgt,0.004,tair[sas],tair[sas],hgt,PAIt[sas],vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk[sas])
-      gt0 <- gcanopy(uh,0.004,0,tair[sas],tair[sas],hgt,PAIt[sas],vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk[sas])
-      gtt <- 1/(1/gta+1/gtc)
-      gha <- 1.41*gforcedfree(vegp$lw*0.71,uz[sas],tair[sas],5,pk[sas],5)
-      # Radiation
-      jd<-jday(tme=tme)
-      lt <- tme$hour+tme$min/60+tme$sec/3600
-      lt<-lt
-      dp<-climdata$difrad/climdata$swrad
-      dp[is.na(dp)]<-0.5
-      dp[is.infinite(dp)]<-0.5
-      dp[dp>1]<-1
-      Rsw <- cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=vegp$refls)
-      Rsw<-Rsw[sas]
-      Rlw <- canlw(tair, PAIu, 1-vegp$vegem, climdata$skyem, vegp$clump)$lwin
-      Rlw <-Rlw[sas]
-      gv <- layercond(Rsw, vegp$gsmax, vegp$q50)
-      gv <-1/(1/gv+1/gha)
-      # Leaf absorbed radiation
-      Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,PAIu,pLAI,vegp$x,0.95,0.95,
-                      0.95,0.85,climdata$skyem,dp,vegp$clump)
-      Rabs<-Rabs[sas]
-      soilm<-nmrout$soilmoist
-      theta<-soilm$WC0cm[sas]
-      tln<-tleafS(tair[sas],snowtemp[sas],relhum[sas],pk[sas],theta,gtt,gt0,gha,gv,Rabs,
-                  0.5,soilp$b,soilp$psi_e,soilp$Smax,1,leafdens[sas])
-      tleaf1<-pmax(tln$tleaf,snowtemp[sas])
-      tz1<-tln$tn
-      rh1<-tln$rh
-    }
-    tz<-rep(0,length(uf))
-    rh<-rep(0,length(uf))
-    tleaf<-rep(0,length(uf))
-    ws<-rep(0,length(uf))
-    tz[sas]<-tz1
-    tz[sbs]<-tz2
-    tleaf[sas]<-tleaf1
-    tleaf[sbs]<-tleaf2
-    rh[sas]<-rh1
-    rh[sbs]<-rh2
-    Rswa<-rep(0,length(uf))
-    Rlwa<-rep(0,length(uf))
-    Rswa[sas]<-Rsw
-    Rswa[sbs]<-Rsw2
-    Rlwa[sas]<-Rlw
-    Rlwa[sbs]<-Rlw2
-    ws[sas]<-uz[sas]
-    ws[sbs]<-ws2
+    # Calculate conductivities
+    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtt<-1/(1/gtt+1/gtc)
+    gha<-1.41*gforcedfree(vegp$lw*0.71*2,uz,tair,5,pk,5)
+    PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.6)
+    gC<-layercond(PAR,vegp$gsmax,vegp$q50)
+    gv<-1/(1/gC+1/gha)
+    gtz<-phair(tair)*uz
+    gL<-1/(1/gha+1/gtz)
+    # Calculate absorbed radiation
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,PAIu,pLAI,vegp$x,0.95,0.95,
+                    0.95,0.85,climdata$skyem,dp,vegp$clump)
+    Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
+               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+    tz<-Th$tn
+    tleaf<-Th$tleaf
+    rh<-Th$rh
+    # Radiation
+    Rsw<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.95)
+    Rlw<-canlw(tair,PAIu,0.85,climdata$skyem,vegp$clump)$lwin
   }
+  tz[sbs]<-tz2
+  tleaf[sbs]<-tleaf2
+  rh[sbs]<-rh2
+  uz[sbs]<-0
+  Rsw[sbs]<-Rsw2
+  Rlw[sbs]<-Rlw2
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
-                     RHref=relhum,RHloc=rh,RSWloc=Rswa,RLWloc=Rlwa,windspeed=ws)
+                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
   return(metout)
 }
 #' Run model under steady state conditions
@@ -749,15 +707,6 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     sel<-which(dif==min(dif))[1]
     leafdens<-vegp$PAI[sel,]/(z[2]-z[1])
   } else PAIu<-rep(0,length(PAIt))
-  # (2) Estimate Sensible Heat flux
-  # (2a) Latent heat flux
-  plant<-nmrout$plant
-  lambda <- (-42.575*tair+44994)
-  L<-(lambda*plant$TRANS)/(3600*18.01528)
-  metout<-nmrout$metout
-  snowdep<-metout$SNOWDEP
-  selsnow<-which(snowdep > 0)
-  # (2b) Ground heat flux
   # Calculate wind speed 2 m above canopy
   if (metopen) {
     if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
@@ -766,111 +715,91 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     u2 <- u
     if (windhgt != (2+hgt)) u2 <- windprofile(u, windhgt, hgt+2, a = 2, PAIt, hgt)
   }
+  # Get an approximate value for H for diabatic terms
   cp<-cpair(tair)
   ph<-phair(tair,pk)
   u2[u2<0.5]<-0.5
   zm<-roughlength(hgt, PAIt)
+  zh<-0.2*zm
   d<-zeroplanedis(hgt, PAIt)
   uf <- (0.4*u2)/log((2+hgt-d)/zm)
+  sb<-5.67*10^-8
+  Rlw<-(1-climdata$skyem)*sb*vegp$vegem*(tair+273.15)^4
+  Rnet<-(1-0.23)*climdata$swrad-Rlw
+  H<-0.2*Rnet
+  dba <- diabatic_cor(tair,pk,H,uf,hgt+2,d)
+  dba$psi_m<-ifelse(dba$psi_m>2.5,2.5,dba$psi_m)
+  dba$psi_h<-ifelse(dba$psi_h>2.5,2.5,dba$psi_h)
+  dba$psi_m<-ifelse(dba$psi_m< -2.5,-2.5,dba$psi_m)
+  dba$psi_h<-ifelse(dba$psi_h< -2.5,-2.5,dba$psi_h)
   # Wind speed at user height
   a<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
   uz<-.windprofile(u2,hgt+2,reqhgt,a,hgt,PAIt)
   ln2 <- suppressWarnings(log((hgt - d) / zm))
   ln2[ln2<0.55]<-0.55
   uh <- (uf/0.4)*ln2
-  # Conductivities
-  hgt2<-ifelse(hgt>2,2,hgt)
-  gta <- gturb(u,2,2,NA,hgt2,PAIt,tair,0,0,0.004,pk)
-  # Extract soil temperature
+  # Calculate things that are common to below and above
   soilt<-nmrout$soiltemps
+  soilm<-nmrout$soilmoist
   tground<- soilt$D0cm
-  mult<-cp*gta
-  # Calculate max conductivity
-  maxflux<-(cp*ph*(hgt+2))/3600
-  mult<-ifelse(mult>maxflux,maxflux,mult)
-  G<-mult*(tair-tground)
-  sb<-sb<-5.67*10^-8
-  Rsw<-(1-vegp$refg)*climdata$swrad
-  Rlw<-(1-climdata$skyem)*sb*groundem*(tground+273.15)^4
-  Rnet<-Rsw-Rlw
-  H<-Rnet-G-L
-  # Recalculate with diabatic lapse rate
-  dba <- diabatic_cor(tair,pk,H,uf,hgt+2,d)
-  dba$psi_m<-ifelse(dba$psi_m>2.5,2.5,dba$psi_m)
-  dba$psi_m<-ifelse(dba$psi_h>2.5,2.5,dba$psi_h)
-  # Wind speed at user height
-  a<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
-  uz<-.windprofile(u2,hgt+2,vegp$hgtg,a,hgt,PAIt,dba$psi_m)
-  uf<-(0.4*u2)/(log((hgt+2-d)/zm)+dba$psi_m)
-  uf[uf<0.065]<-0.065
-  xx<-(H/(0.4*ph*cp*uf))
-  T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
-  xx<-(H/(0.4*ph*cp*uf))
-  T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
-  ea<-satvap(tair)*(relhum/100)
-  tmn<-pmax(dewpoint(ea,tair),tair-5)
-  T0<-ifelse(T0<tmn,tmn,T0)
-  tmx<-pmax(tair+20,tground)
-  T0<-ifelse(T0>tmx,tmx,T0)
-  T0<-ifelse(T0>80,80,T0)
-  if (reqhgt >= hgt) {
-    psihe<-(T0-tair)/xx-log((hgt+2-d)/(0.2*zm))
-    rat<-log((reqhgt-d)/(0.2*zm))/log((hgt+2-d)/(0.2*zm))
-    psihe<-rat*psihe
-    tz<-T0-xx*(log((reqhgt-d)/(0.2*zm))+psihe)
-    tmx<-pmax(tair,T0)
-    tmn<-pmin(tair,T0)
-    tz<-ifelse(tz>tmx,tmx,tz)
-    tz<-ifelse(tz<tmn,tmn,tz)
+  theta<-soilm$WC0cm
+  leafdens<-PAIt/hgt
+  dp<-climdata$difrad/climdata$swrad
+  dp[is.na(dp)]<-0.5
+  dp[is.infinite(dp)]<-0.5
+  dp[dp>1]<-1
+  gtt<-gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
+  # Above canopy
+  if (reqhgt > hgt) {
+    # Calculate conductivities
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gha<-1.41*gforcedfree(vegp$lw*0.71,uh,tair,5,pk,5)
+    gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
+    gv<-1/(1/gC+1/gha)
+    gtz<-phair(tair)*uh
+    gL<-1/(1/gha+1/gtz)
+    # Calculate absorbed radiation
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,vegp$refls,vegp$refw,
+                    vegp$refg,vegp$vegem,climdata$skyem,dp,vegp$clump)
+    Th<-tleafS(tair,tground,relhum,pk,theta,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
+               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+    tn<-Th$tn
+    tleaf<-Th$tleaf
+    # Calculate temperature and relative humidity at height z
+    gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
+    gt2<-1/(1/gtt-1/gtc)
+    eref<-(relhum/100)*satvap(tair)
+    ecan<-(Th$rh/100)*satvap(tn)
+    ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
+    tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
     rh<-(ea/satvap(tz))*100
-    tleaf<-rep(-999,length(tz))
+    rh[rh>100]<-100
     Rsw<-climdata$swrad
-    Rlw<-5.67*10^-8*climdata$skyem*(tair+273.15)^4
   } else {
-    ln2 <- suppressWarnings(log((hgt - d) / zm) + dba$psi_m)
-    ln2[ln2<0.55]<-0.55
-    uh <- (uf/0.4)*ln2
-    # Conductivities
-    gta <- gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
-    gtc <- gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
-    gtc[gtc<1]<-1
-    gt0 <- gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
-    gt0[gt0<1]<-1
-    gtt <- 1/(1/gta+1/gtc)
-    gha <- 1.41*gforcedfree(vegp$lw*0.71,uz,tair,5,pk,5)
-    # Radiation
-    jd<-jday(tme=tme)
-    lt <- tme$hour+tme$min/60+tme$sec/3600
-    dp<-climdata$difrad/climdata$swrad
-    dp[is.na(dp)]<-0.5
-    dp[is.infinite(dp)]<-0.5
-    dp[dp>1]<-1
-    Rsw <- cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=vegp$refls)
-    Rlw <- canlw(tair, PAIu, 1-vegp$vegem, climdata$skyem, vegp$clump)$lwin
-    gv <- layercond(Rsw, vegp$gsmax, vegp$q50)
-    gv <-1/(1/gv+1/gha)
-    # Leaf absorbed radiation
+    # Calculate conductivities
+    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtt<-1/(1/gtt+1/gtc)
+    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gha<-1.41*gforcedfree(vegp$lw*0.71,uz,tair,5,pk,5)
+    PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.2)
+    gC<-layercond(PAR,vegp$gsmax,vegp$q50)
+    gv<-1/(1/gC+1/gha)
+    gtz<-phair(tair)*uz
+    gL<-1/(1/gha+1/gtz)
+    # Calculate absorbed radiation
     Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,PAIu,pLAI,vegp$x,vegp$refls,vegp$refw,
                     vegp$refg,vegp$vegem,climdata$skyem,dp,vegp$clump)
-    soilm<-nmrout$soilmoist
-    theta<-soilm$WC0cm
-    tln<-tleafS(tair,tground,relhum,pk,theta,gtt,gt0,gha,gv,Rabs,vegp$vegem,soilp$b,soilp$psi_e,
-                soilp$Smax,surfwet,leafdens)
-    tleaf<-tln$tleaf
-    tz<-tln$tn
-    tleaf<-pmin(tleaf,T0)
-    tz<-pmin(tz,T0)
-    rh<-tln$rh
+    Th<-tleafS(tair,tground,relhum,pk,theta,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
+               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+    tz<-Th$tn
+    tleaf<-Th$tleaf
+    rh<-Th$rh
+    # Radiation
+    Rsw<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=vegp$refls)
+    Rlw<-canlw(tair,PAIu,1-vegp$vegem,climdata$skyem,vegp$clump)$lwin
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
                      RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
-  # Cap at theoretical upper and lower limits
-  mx<-pmax(tground,T0)
-  mn<-pmin(tground,tair-7)
-  metout$Tloc[metout$Tloc>mx]<-mx[metout$Tloc>mx]
-  metout$tleaf[metout$tleaf>mx]<-mx[metout$tleaf>mx]
-  metout$Tloc[metout$Tloc<mn]<-mn[metout$Tloc<mn]
-  metout$tleaf[metout$tleaf<mn]<-mn[metout$tleaf<mn]
   # Consider snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
