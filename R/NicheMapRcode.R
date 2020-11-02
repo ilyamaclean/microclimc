@@ -601,8 +601,9 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rlw<-(1-climdata$skyem)*0.85*sb*(tz+273.15)^4
   } else {
     # Calculate conductivities
-    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
     gtt<-1/(1/gtt+1/gtc)
+    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71*2,uz,tair,5,pk,5)
     PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.6)
     gC<-layercond(PAR,vegp$gsmax,vegp$q50)
