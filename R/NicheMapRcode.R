@@ -584,7 +584,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
                     0.95,0.85,climdata$skyem,dp,vegp$clump)
     Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,0.85,soilp$b,
-               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+               soilp$psi_e,soilp$Smax,1,leafdens)
     tn<-Th$tn
     tleaf<-Th$tleaf
     # Calculate temperature and relative humidity at height z
@@ -614,7 +614,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,PAIu,pLAI,vegp$x,0.95,0.95,
                     0.95,0.85,climdata$skyem,dp,vegp$clump)
     Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
-               soilp$psi_e,soilp$Smax,surfwet,leafdens)
+               soilp$psi_e,soilp$Smax,1,leafdens)
     tz<-Th$tn
     tleaf<-Th$tleaf
     rh<-Th$rh
