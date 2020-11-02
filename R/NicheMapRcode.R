@@ -496,6 +496,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   metout<-nmrout$metout
   snowdep<-metout$SNOWDEP/100
   # (1) Unpack variables
+  tme<-as.POSIXlt(climdata$obs_time)
   tair<-climdata$temp
   relhum<-climdata$relhum
   pk<-climdata$pres
