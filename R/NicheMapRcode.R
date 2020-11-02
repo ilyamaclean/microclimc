@@ -622,12 +622,14 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rsw<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.95)
     Rlw<-canlw(tair,PAIu,0.85,climdata$skyem,vegp$clump)$lwin
   }
-  tz[sbs]<-tz2
-  tleaf[sbs]<-tleaf2
-  rh[sbs]<-rh2
-  uz[sbs]<-0
-  Rsw[sbs]<-Rsw2
-  Rlw[sbs]<-Rlw2
+  if (length(sbs)>0) {
+    tz[sbs]<-tz2
+    tleaf[sbs]<-tleaf2
+    rh[sbs]<-rh2
+    uz[sbs]<-0
+    Rsw[sbs]<-Rsw2
+    Rlw[sbs]<-Rlw2
+  }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
                      RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
   return(metout)
