@@ -189,7 +189,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   RHhr<-climdata$relhum
   RHhr[RHhr>100]<-100
   RHhr[RHhr<0]<-0
-  e0<-satvap(TAIRhr,ice = TRUE)
+  e0<-satvap(TAIRhr)
   ea<-e0*(RHhr/100)
   eo<-1.24*(10*ea/(TAIRhr+273.15))^(1/7)
   CLDhr<-((climdata$skyem-eo)/(1-eo))*100
@@ -432,29 +432,33 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   cp<-cpair(tair)
   # Air temperature expressed as leaf temperature
   aL<-(gtt*(tair+273.15)+gt0*(tground+273.15))/(gtt+gt0)
-  bL<-(leafdens*gha)/(gtt+gt0)
+  bL<-(leafdens*gL)/(gtt+gt0)
   # Vapour pressures
-  es<-satvap(tair, ice = TRUE)
+  es<-satvap(tair)
   eref <- (relhum/100)*es
   rhsoil<-soilrh(theta,soilb,Psie,Smax,tground)
-  esoil<-rhsoil*satvap(tground, ice = TRUE)
-  delta <- 4098*(0.6108*exp(17.27*tair/(tair+237.3)))/(tair+237.3)^2
+  esoil<-rhsoil*satvap(tground)
+  # add a small correction to improve delta estimate
+  sb<-5.67*10^-8
+  Rnet<-Rabs-0.97*sb*(tair+273.15)^4
+  tle<-tair+(0.5*Rnet)/(cp*leafdens*gha)
+  tapprox<-(tle+tair)/2
+  delta <- 4098*(0.6108*exp(17.27*tapprox/(tapprox+237.3)))/(tapprox+237.3)^2
   ae<-(gtt*eref+gt0*esoil+gv*es)/(gtt+gt0+gv)
-  be<-delta/(gtt+gt0+gv)
+  be<-(gv*delta)/(gtt+gt0+gv)
   # Sensible heat
   bH<-gha*cp
   # Latent heat
   lambda <- (-42.575*tair+44994)
   aX<-((lambda*gv)/pk)*(surfwet*es-ae)
-  bX<-surfwet*delta-be
+  bX<-((lambda*gv)/pk)*(surfwet*delta-be)
   aX[aX<0]<-0
   bX[bX<0]<-0
   # Emmited radiation
-  sb<-5.67*10^-8
   aR<-sb*vegem*aL^4
   bR<-4*vegem*sb*(aL^3*bL+(tair+273.15)^3)
   # Leaf temperature
-  dTL <- (Rabs-aR-aX)/(bR+bX+bH)
+  dTL <- (Rabs-aR-aX)/(1+bR+bX+bH)
   # tz pass 1
   tn<-aL-273.15+bL*dTL
   tleaf<-tn+dTL
@@ -462,7 +466,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   eanew<-ae+be*dTL
   eanew[eanew<0.01]<-0.01
   tmin<-dewpoint(eanew,tn,ice = TRUE)
-  esnew<-satvap(tn, ice = TRUE)
+  esnew<-satvap(tn)
   eanew<-ifelse(eanew>esnew,esnew,eanew)
   rh<-(eanew/esnew)*100
   # Set both tair and tleaf so as not to drop below dewpoint
@@ -473,10 +477,12 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
   # cap upper limits of both tair and tleaf
   tmx<-pmax(tground+5,tair+5)
   tn<-ifelse(tn>tmx,tmx,tn)
+  tmx<-pmax(tground+30,tair+30)
   tleaf<-ifelse(tleaf>tmx,tmx,tleaf)
   # cap lower limits
   tmn<-tair-7
   tn<-ifelse(tn<tmn,tmn,tn)
+  tmn<-tair-20
   tleaf<-ifelse(tleaf<tmn,tmn,tleaf)
   return(list(tleaf=tleaf,tn=tn,rh=rh))
 }
@@ -581,8 +587,8 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, ve
       tmn<-pmin(tair[sas],T0)
       tz1<-ifelse(tz1>tmx,tmx,tz1)
       tz1<-ifelse(tz1<tmn,tmn,tz1)
-      ea<-satvap(tair[sas],ice=T)*(relhum[sas]/100)
-      rh1<-(ea/satvap(tz1,ice=T))*100
+      ea<-satvap(tair[sas])*(relhum[sas]/100)
+      rh1<-(ea/satvap(tz1))*100
       Rsw<-climdata$swrad
       Rlw<-5.67*10^-8*climdata$skyem*(tair+273.15)^4
       Rsw<-Rsw[sas]
@@ -801,7 +807,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
   xx<-(H/(0.4*ph*cp*uf))
   T0<-tair+xx*(log((hgt+2-d)/(0.2*zm))+dba$psi_h)
-  ea<-satvap(tair,ice=T)*(relhum/100)
+  ea<-satvap(tair)*(relhum/100)
   tmn<-pmax(dewpoint(ea,tair),tair-5)
   T0<-ifelse(T0<tmn,tmn,T0)
   tmx<-pmax(tair+20,tground)
@@ -816,7 +822,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     tmn<-pmin(tair,T0)
     tz<-ifelse(tz>tmx,tmx,tz)
     tz<-ifelse(tz<tmn,tmn,tz)
-    rh<-(ea/satvap(tz,ice=T))*100
+    rh<-(ea/satvap(tz))*100
     tleaf<-rep(-999,length(tz))
     Rsw<-climdata$swrad
     Rlw<-5.67*10^-8*climdata$skyem*(tair+273.15)^4
