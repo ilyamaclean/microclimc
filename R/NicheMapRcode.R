@@ -412,6 +412,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 #' and [gcanopy()]
 #' @param gt0 molar conductivity from leaf height to ground as returned by [gcanopy()]
 #' @param gha boundary layer conductance of leaf as returned by [gforcedfree()]
+#' @param gL combined boundary layer and leaf-air conductance given by 1/(1/gha+1/(uz*ph))
 #' @param gv combined boundary layer and stomatal conductance of leaf
 #' @param Rabs radiation absorbed by leaf as returned by e.g. [leafabs()]
 #' @param soilb Shape parameter for Campbell soil model (dimensionless, > 1) as returned by
@@ -426,7 +427,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 #' @return `rh` relative humidity
 #' @import microctools
 #' @export
-tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, vegem, soilb,
+tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs, vegem, soilb,
                    Psie, Smax, surfwet, leafdens) {
   ###
   cp<-cpair(tair)
