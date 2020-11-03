@@ -581,30 +581,35 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   dp[dp>1]<-1
   gtt<-gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,pk=pk)
   # Above canopy
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     # Calculate conductivities
-    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
-    gha<-1.41*gforcedfree(vegp$lw*2*0.71,uh,tair,5,pk,5)
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gha<-1.41*gforcedfree(vegp$lw*0.71,uh,tair,5,pk,5)
     gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
     gv<-1/(1/gC+1/gha)
     gtz<-phair(tair)*uh
     gL<-1/(1/gha+1/gtz)
     # Calculate absorbed radiation
-    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
-                    0.95,0.85,climdata$skyem,dp,vegp$clump)
-    Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,0.85,soilp$b,
-               soilp$psi_e,soilp$Smax,1,leafdens)
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,vegp$refls,vegp$refw,
+                    vegp$refg,vegp$vegem,climdata$skyem,dp,vegp$clump)
+    Th<-tleafS(tair,tground,relhum,pk,theta,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
+               soilp$psi_e,soilp$Smax,surfwet,leafdens)
     tn<-Th$tn
     tleaf<-Th$tleaf
-    # Calculate temperature and relative humidity at height z
-    gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,pk=pk)
-    gt2<-1/(1/gtt-1/gtc)
-    eref<-(relhum/100)*satvap(tair)
-    ecan<-(Th$rh/100)*satvap(tn)
-    ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
-    tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
-    rh<-(ea/satvap(tz))*100
-    rh[rh>100]<-100
+    if (reqhgt == hgt) {
+      tz<-tn
+      rh<-Th$rh
+    } else {
+      # Calculate temperature and relative humidity at height z
+      gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
+      gt2<-1/(1/gtt-1/gtc)
+      eref<-(relhum/100)*satvap(tair)
+      ecan<-(Th$rh/100)*satvap(tn)
+      ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
+      tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
+      rh<-(ea/satvap(tz))*100
+      rh[rh>100]<-100
+    }
     Rsw<-climdata$swrad
     sb<-5.67*10^-8
     Rlw<-(1-climdata$skyem)*0.85*sb*(tz+273.15)^4
