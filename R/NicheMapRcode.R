@@ -590,7 +590,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     gtz<-phair(tair)*uh
     gL<-1/(1/gha+1/gtz)
     # Calculate absorbed radiation
-    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,snowtemp,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
                     0.95,0.85,climdata$skyem,dp,vegp$clump)
     Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
                soilp$psi_e,soilp$Smax,surfwet,leafdens)
@@ -625,7 +625,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     gtz<-phair(tair)*uz
     gL<-1/(1/gha+1/gtz)
     # Calculate absorbed radiation
-    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,PAIu,pLAI,vegp$x,0.95,0.95,
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,snowtemp,lat,long,PAIt,PAIu,pLAI,vegp$x,0.95,0.95,
                     0.95,0.85,climdata$skyem,dp,vegp$clump)
     Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
                soilp$psi_e,soilp$Smax,1,leafdens)
