@@ -589,7 +589,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     tleaf<-Th$tleaf
     if (reqhgt == hgt) {
       tz<-tn
-      th<-Th$rh
+      rh<-Th$rh
     } else {
       # Calculate temperature and relative humidity at height z
       gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,pk=pk)
