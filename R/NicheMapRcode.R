@@ -583,16 +583,16 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   # Above canopy
   if (reqhgt >= hgt) {
     # Calculate conductivities
-    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
-    gha<-1.41*gforcedfree(vegp$lw*0.71,uh,tair,5,pk,5)
-    gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
+    gha<-1.41*gforcedfree(vegp$lw*0.71*2,uh,tair,5,pk,5)
+    gC<-layercond(climdata$swrad,1.5,vegp$q50)
     gv<-1/(1/gC+1/gha)
     gtz<-phair(tair)*uh
     gL<-1/(1/gha+1/gtz)
     # Calculate absorbed radiation
-    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,vegp$refls,vegp$refw,
-                    vegp$refg,vegp$vegem,climdata$skyem,dp,vegp$clump)
-    Th<-tleafS(tair,tground,relhum,pk,theta,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
+    Rabs<-.leafabs2(climdata$swrad,tme,tair,tground,lat,long,PAIt,0,pLAI,vegp$x,0.95,0.95,
+                    0.95,0.85,climdata$skyem,dp,vegp$clump)
+    Th<-tleafS(tair,snowtemp,relhum,pk,0.5,gtt,gt0,gha,gv,gL,Rabs,vegp$vegem,soilp$b,
                soilp$psi_e,soilp$Smax,surfwet,leafdens)
     tn<-Th$tn
     tleaf<-Th$tleaf
@@ -620,7 +620,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71*2,uz,tair,5,pk,5)
     PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.6)
-    gC<-layercond(PAR,vegp$gsmax,vegp$q50)
+    gC<-layercond(PAR,1.5,vegp$q50)
     gv<-1/(1/gC+1/gha)
     gtz<-phair(tair)*uz
     gL<-1/(1/gha+1/gtz)
