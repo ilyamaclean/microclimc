@@ -817,7 +817,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
     snowtemp<-nmrout$SN1
-  } else snowtemp<-rep(0,length(L))
+  } else snowtemp<-rep(0,length(tz))
   mo<-nmrout$metout
   snowdep<-mo$SNOWDEP
   if (max(snowdep) > 0) {
