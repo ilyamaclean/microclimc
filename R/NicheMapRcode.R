@@ -417,7 +417,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 #' @param soilb Shape parameter for Campbell soil model (dimensionless, > 1) as returned by
 #' [soilinit()]
 #' @param Psie Soil matric potential (J / m^3) as returned by [soilinit()]
-#' @param Smax Volumetric water content at saturation [m3 / m3]
+#' @param Smax Volumetric water content at saturation (m3 / m3)
 #' @param surfwet proportion of leaf surface acting as free water surface
 #' @param leafdens Total one sided leaf area per m^3 at desired height
 #' @return a list of the following:

@@ -37,7 +37,7 @@ and \code{\link[=gcanopy]{gcanopy()}}}
 
 \item{Psie}{Soil matric potential (J / m^3) as returned by \code{\link[=soilinit]{soilinit()}}}
 
-\item{Smax}{Volumetric water content at saturation \link{m3 / m3}}
+\item{Smax}{Volumetric water content at saturation (m3 / m3)}
 
 \item{surfwet}{proportion of leaf surface acting as free water surface}
 
