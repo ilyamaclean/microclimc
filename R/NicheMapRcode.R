@@ -511,20 +511,30 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   pLAI[is.na(pLAI)]<-0.8
   m<-length(vegp$iw)
   z<-c((1:m)-0.5)/m*hgt
+  # Esimate PAI above point and PAI of layer
   if (reqhgt < hgt) {
     sel<-which(z>reqhgt)
-    wgt1<-abs(z[sel[1]]-reqhgt)
-    wgt2<-abs(z[sel[1]-1]-reqhgt)
-    sel2<-c(sel[1]-1,sel)
-    PAIu1<-vegp$PAI[sel,]
-    PAIu1<-apply(PAIu1,2,sum)
-    PAIu2<-vegp$PAI[sel2,]
-    PAIu2<-apply(PAIu2,2,sum)
-    PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+    if (length(sel) > 1) {
+      wgt1<-abs(z[sel[1]]-reqhgt)
+      wgt2<-abs(z[sel[1]-1]-reqhgt)
+      sel2<-c(sel[1]-1,sel)
+      PAIu1<-vegp$PAI[sel,]
+      if (length(sel) > 1) PAIu1<-apply(PAIu1,2,sum)
+      PAIu2<-vegp$PAI[sel2,]
+      if (length(sel2) > 1) PAIu2<-apply(PAIu2,2,sum)
+      if (length(wgt2) > 1) {
+        PAIu<-PAIu1+(wgt1/(wgt1+wgt2))*(PAIu2-PAIu1)
+      } else PAIu<-PAIu1
+    } else {
+      zu<-z[length(z)]
+      wgt<-(hgt-reqhgt)/(hgt-zu)
+      PAIu<-wgt*vegp$PAI[length(z),]
+    }
     dif<-abs(z-reqhgt)
-    sel<-which(dif==min(dif))
+    sel<-which(dif==min(dif))[1]
     leafdens<-vegp$PAI[sel,]/(z[2]-z[1])
   } else PAIu<-rep(0,length(PAIt))
+  # Calculate wind speed 2 m above canopy
   # Calculate wind speed 2 m above canopy
   if (metopen) {
     if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
