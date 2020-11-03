@@ -608,8 +608,8 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
       ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
       tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
       rh<-(ea/satvap(tz))*100
-      rh[rh>100]<-100
     }
+    rh[rh>100]<-100
     Rsw<-climdata$swrad
     sb<-5.67*10^-8
     Rlw<-(1-climdata$skyem)*0.85*sb*(tz+273.15)^4
@@ -768,7 +768,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   dp[dp>1]<-1
   gtt<-gturb(u2,hgt+2,hgt+2,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
   # Above canopy
-  if (reqhgt > hgt) {
+  if (reqhgt >= hgt) {
     # Calculate conductivities
     gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71,uh,tair,5,pk,5)
@@ -783,14 +783,19 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
                soilp$psi_e,soilp$Smax,surfwet,leafdens)
     tn<-Th$tn
     tleaf<-Th$tleaf
-    # Calculate temperature and relative humidity at height z
-    gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
-    gt2<-1/(1/gtt-1/gtc)
-    eref<-(relhum/100)*satvap(tair)
-    ecan<-(Th$rh/100)*satvap(tn)
-    ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
-    tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
-    rh<-(ea/satvap(tz))*100
+    if (reqhgt == hgt) {
+      tz<-tn
+      rh<-Th$rh
+    } else {
+      # Calculate temperature and relative humidity at height z
+      gtc<-gturb(u2,hgt+2,reqhgt,hgt,hgt,PAIt,tair,dba$psi_m,dba$psi_h,0.004,pk)
+      gt2<-1/(1/gtt-1/gtc)
+      eref<-(relhum/100)*satvap(tair)
+      ecan<-(Th$rh/100)*satvap(tn)
+      ea<-(gt2*eref+gtc*ecan)/(gt2+gtc)
+      tz<-(gt2*tair+gtc*tn)/(gt2+gtc)
+      rh<-(ea/satvap(tz))*100
+    }
     rh[rh>100]<-100
     Rsw<-climdata$swrad
   } else {
