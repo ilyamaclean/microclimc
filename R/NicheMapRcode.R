@@ -442,7 +442,9 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   sb<-5.67*10^-8
   Rnet<-Rabs-0.97*sb*(tair+273.15)^4
   tle<-tair+(0.5*Rnet)/(cp*gha)
-  tapprox<-leafdens*tle+(1-leafdens)*tair
+  wgt1<-ifelse(leafdens<1,leafdens/2,1-0.5/leafdens)
+  wgt2<-1-wgt1
+  tapprox<-wgt*tle+wgt2*tair
   delta <- 4098*(0.6108*exp(17.27*tapprox/(tapprox+237.3)))/(tapprox+237.3)^2
   ae<-(gtt*eref+gt0*esoil+gv*es)/(gtt+gt0+gv)
   be<-(gv*delta)/(gtt+gt0+gv)
