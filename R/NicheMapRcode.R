@@ -488,6 +488,25 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   tleaf<-ifelse(tleaf<tmn,tmn,tleaf)
   return(list(tleaf=tleaf,tn=tn,rh=rh))
 }
+#' Internation function for computing snow temperature
+.snowtempf <- function(snowdepth,snow,reqhgt) {
+  ndepths<-rev(c(0,2.5,5,10,20,50,100,200,300))/100
+  ha<-ndepths-reqhgt
+  selb<-which(ha<=0)[1]# layer below
+  sela<-selb-1 # layer below or equal
+  sm<-abs(reqhgt-ndepths[sela])+abs(reqhgt-ndepths[selb])
+  wgt1<-1-abs(reqhgt-ndepths[sela])/sm # weight above
+  wgt2<-1-abs(reqhgt-ndepths[selb])/sm # weight below
+  hs<-which(ndepths[sela]>(snowdepth/100))
+  wgt1<-rep(wgt1,length(snowdepth))
+  wgt2<-rep(wgt2,length(snowdepth))
+  wgt1[hs]<-0
+  wgt2[hs]<-1
+  stemp<-wgt1*snow[,sela+2]+wgt2*snow[,selb+2]
+  sel<-which(snowdepth<reqhgt)
+  stemp[sel]<-0
+  stemp
+}
 #' Internal function for running model with snow
 .runmodelsnow <- function(climdata, vegp, soilp, nmrout, reqhgt, lat, long, metopen = TRUE, windhgt = 2) {
   # Snow
@@ -565,16 +584,11 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   sbs <- which(reqhgt<snowdep)
   # Below snow
   if (length(sbs)>0) {
-    lyr<-round((reqhgt/snowdep[sbs])*9,0)
-    lyr[lyr<1]<-1
-    lyr[lyr>9]<-9
-    tz2<-0
-    for(i in 1:length(lyr)) tz2[i]<-snow[sbs[i],lyr[i]+2]
+    tz2<-.snowtempf(snowdepth,snow,reqhgt)[sbs]
     rh2<-rep(100,length(tz2))
     Rsw2<-rep(0,length(tz2))
-    Rlw2<-5.67*10^-8*0.85*(snowtemp+273.15)^4
-    Rlw2<-Rlw2[sbs]
-    tleaf2<-snowtemp[sbs]
+    Rlw2<-5.67*10^-8*0.85*(tz2+273.15)^4
+    tleaf2<-tz2[sbs]
   }
   # Calculate things that are common to below and above
   leafdens<-(PAIt/hgt)*1.2
