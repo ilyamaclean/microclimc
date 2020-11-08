@@ -556,7 +556,6 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     leafdens<-vegp$PAI[sel,]/(z[2]-z[1])
   } else PAIu<-rep(0,length(PAIt))
   # Calculate wind speed 2 m above canopy
-  # Calculate wind speed 2 m above canopy
   if (metopen) {
     if (windhgt != 2) u <- u*4.87/log(67.8*windhgt-5.42)
     u2<-u*log(67.8*(hgt+2)-5.42)/log(67.8*2-5.42)
@@ -584,7 +583,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   sbs <- which(reqhgt<snowdep)
   # Below snow
   if (length(sbs)>0) {
-    tz2<-.snowtempf(snowdepth,snow,reqhgt)[sbs]
+    tz2<-.snowtempf(snowdep,snow,reqhgt)[sbs]
     rh2<-rep(100,length(tz2))
     Rsw2<-rep(0,length(tz2))
     Rlw2<-5.67*10^-8*0.85*(tz2+273.15)^4
