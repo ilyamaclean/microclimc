@@ -4,8 +4,25 @@
 \alias{tleafS}
 \title{Steady-state leaf and air temperature}
 \usage{
-tleafS(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs,
-  vegem, soilb, Psie, Smax, surfwet, leafdens)
+tleafS(
+  tair,
+  tground,
+  relhum,
+  pk,
+  theta,
+  gtt,
+  gt0,
+  gha,
+  gv,
+  gL,
+  Rabs,
+  vegem,
+  soilb,
+  Psie,
+  Smax,
+  surfwet,
+  leafdens
+)
 }
 \arguments{
 \item{tair}{air temperature at reference height (deg C)}

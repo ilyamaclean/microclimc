@@ -4,9 +4,27 @@
 \alias{.leafabs2}
 \title{Internal function for calculating lead absorbed radiation on vector}
 \usage{
-.leafabs2(Rsw, tme, tair, tground, lat, long, PAIt, PAIu, pLAI, x, refls,
-  refw, refg, vegem, skyem, dp, merid = round(long/15, 0) * 15,
-  dst = 0, clump = 0)
+.leafabs2(
+  Rsw,
+  tme,
+  tair,
+  tground,
+  lat,
+  long,
+  PAIt,
+  PAIu,
+  pLAI,
+  x,
+  refls,
+  refw,
+  refg,
+  vegem,
+  skyem,
+  dp,
+  merid = round(long/15, 0) * 15,
+  dst = 0,
+  clump = 0
+)
 }
 \description{
 Internal function for calculating lead absorbed radiation on vector

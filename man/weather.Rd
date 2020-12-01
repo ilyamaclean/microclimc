@@ -4,7 +4,8 @@
 \name{weather}
 \alias{weather}
 \title{A data frame of hourly weather}
-\format{a data frame with the following elements:
+\format{
+a data frame with the following elements:
 \describe{
 \item{obs_time}{POSIXlt object of dates and times}
 \item{temp}{temperature (degrees C)}
@@ -15,7 +16,8 @@
 \item{skyem}{Sky emissivity (0-1)}
 \item{windspeed}{Wind speed (m/s)}
 \item{winddir}{Wind direction (decimal degrees)}
-}}
+}
+}
 \usage{
 weather
 }

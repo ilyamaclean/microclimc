@@ -4,8 +4,17 @@
 \alias{.windprofile}
 \title{Internal function for calculating lead absorbed radiation on vector}
 \usage{
-.windprofile(ui, zi, zo, a = 2, hgt, PAI, psi_m = 0, hgtg = 0.05 *
-  hgt, zm0 = 0.004)
+.windprofile(
+  ui,
+  zi,
+  zo,
+  a = 2,
+  hgt,
+  PAI,
+  psi_m = 0,
+  hgtg = 0.05 * hgt,
+  zm0 = 0.004
+)
 }
 \description{
 Internal function for calculating lead absorbed radiation on vector

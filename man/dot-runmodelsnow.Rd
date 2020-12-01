@@ -4,8 +4,17 @@
 \alias{.runmodelsnow}
 \title{Internal function for running model with snow}
 \usage{
-.runmodelsnow(climdata, vegp, soilp, nmrout, reqhgt, lat, long,
-  metopen = TRUE, windhgt = 2)
+.runmodelsnow(
+  climdata,
+  vegp,
+  soilp,
+  nmrout,
+  reqhgt,
+  lat,
+  long,
+  metopen = TRUE,
+  windhgt = 2
+)
 }
 \description{
 Internal function for running model with snow

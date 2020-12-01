@@ -4,7 +4,8 @@
 \name{soilparams}
 \alias{soilparams}
 \title{A table of soil parameters}
-\format{A data frame with the following columns:
+\format{
+A data frame with the following columns:
 \describe{
 \item{Soil.type}{description of soil type}
 \item{Smax}{Volumetric water content at saturation (m^3 / m^3)}
@@ -19,7 +20,8 @@
 \item{rho}{Soil bulk density (Mg / m^3)}
 \item{b}{Shape parameter for Campbell model (dimensionless, > 1)}
 \item{psi_e}{Matric potential (J / m^3)}
-}}
+}
+}
 \source{
 : \url{https://onlinelibrary.wiley.com/doi/full/10.1002/ird.1751}
 }

@@ -7,9 +7,9 @@
 soilinit(soiltype, m = 10, sdepth = 2, reqdepth = NA)
 }
 \arguments{
-\item{soiltype}{one of \code{Sand}, \code{Loamy sand}, \code{Sandy loam}, \code{Loam}, \code{Silt},
-\code{Silt loam}, \code{Sandy clay loam}, \code{Clay loam}, \code{Silty clay loam}, \code{Sandy clay},
-\code{Silty clay} or \code{Clay}.}
+\item{soiltype}{one of \code{Sand}, \verb{Loamy sand}, \verb{Sandy loam}, \code{Loam}, \code{Silt},
+\verb{Silt loam}, \verb{Sandy clay loam}, \verb{Clay loam}, \verb{Silty clay loam}, \verb{Sandy clay},
+\verb{Silty clay} or \code{Clay}.}
 
 \item{m}{number of soil nodes (see details)}
 

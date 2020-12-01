@@ -48,6 +48,7 @@
 #' 0 if snow not present.
 #' @return `plant` a data.frame of plant transpiration rates (g/m^2/hr), leaf water potentials
 #' (J/kg) and root water potential (J/kg) at each of the 10 specified depths.
+#' @return `nmrout` full NicheMapR output
 #' @details Requires NicheMapR: devtools::install_github('mrke/NicheMapR'). NicheMapR is an integrated
 #' soil moisture and temperature model that treats the vegetation as a single layer (https://mrke.github.io/).
 #' This wrapper function, runs the NicheMapR::microclimate function with reduced parameter
@@ -352,7 +353,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (snowmodel == 1) {
     snow <- as.data.frame(microut$sunsnow)
   } else snow <- 0
-  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant))
+  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
 }
 #' Internal function for calculating lead absorbed radiation on vector
 .leafabs2 <-function(Rsw, tme, tair, tground, lat, long, PAIt, PAIu, pLAI, x, refls, refw, refg, vegem, skyem, dp,

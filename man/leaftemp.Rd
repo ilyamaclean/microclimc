@@ -4,8 +4,22 @@
 \alias{leaftemp}
 \title{Calculates leaf temperature of canopy layers}
 \usage{
-leaftemp(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp,
-  soilp, theta, zlafact = 1, surfwet = 1)
+leaftemp(
+  tair,
+  relhum,
+  pk,
+  timestep,
+  gt,
+  gha,
+  gv,
+  Rabs,
+  previn,
+  vegp,
+  soilp,
+  theta,
+  zlafact = 1,
+  surfwet = 1
+)
 }
 \arguments{
 \item{tair}{air temperature at two metres above canopy (deg C)}

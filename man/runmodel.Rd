@@ -4,11 +4,31 @@
 \alias{runmodel}
 \title{Runs the microclimate model over time}
 \usage{
-runmodel(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
-  sdepth = 2, zu = 2, theta = 0.3, merid = 0, dst = 0, n = 0.6,
-  steps = 200, plotout = TRUE, plotsteps = 100, tsoil = NA,
-  metopen = TRUE, windhgt = 2, zlafact = 1, surfwet = 1,
-  previn = NA, snow = NA)
+runmodel(
+  climdata,
+  vegp,
+  soilp,
+  lat,
+  long,
+  edgedist = 100,
+  reqhgt = NA,
+  sdepth = 2,
+  zu = 2,
+  theta = 0.3,
+  merid = 0,
+  dst = 0,
+  n = 0.6,
+  steps = 200,
+  plotout = TRUE,
+  plotsteps = 100,
+  tsoil = NA,
+  metopen = TRUE,
+  windhgt = 2,
+  zlafact = 1,
+  surfwet = 1,
+  previn = NA,
+  snow = NA
+)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables (see e.g. \code{weather})}

@@ -4,17 +4,41 @@
 \alias{runNMR}
 \title{Runs NicheMapR model}
 \usage{
-runNMR(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3,
-  LOR = 1, pLAI = 0.8, clump = 0, REFL = 0.15, LREFL = 0.4,
-  SLE = 0.95, DEP = c(0, 2.5, 5, 10, 15, 20, 30, 50, 100, 200),
-  ALTT = 0, SLOPE = 0, ASPECT = 0, ERR = 1.5, soiltype = "Loam",
-  PE = rep(1.1, 19), KS = rep(0.0037, 19), BB = rep(4.5, 19),
-  BD = rep(1.3, 19), DD = rep(2.65, 19), cap = 1, hori = rep(0,
-  36), maxpool = 1000, rainmult = 1, SoilMoist_Init = c(0.1, 0.12,
-  0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3))
+runNMR(
+  climdata,
+  prec,
+  lat,
+  long,
+  Usrhyt,
+  Veghyt,
+  Refhyt = 2,
+  PAI = 3,
+  LOR = 1,
+  pLAI = 0.8,
+  clump = 0,
+  REFL = 0.15,
+  LREFL = 0.4,
+  SLE = 0.95,
+  DEP = c(0, 2.5, 5, 10, 15, 20, 30, 50, 100, 200),
+  ALTT = 0,
+  SLOPE = 0,
+  ASPECT = 0,
+  ERR = 1.5,
+  soiltype = "Loam",
+  PE = rep(1.1, 19),
+  KS = rep(0.0037, 19),
+  BB = rep(4.5, 19),
+  BD = rep(1.3, 19),
+  DD = rep(2.65, 19),
+  cap = 1,
+  hori = rep(0, 36),
+  maxpool = 1000,
+  rainmult = 1,
+  SoilMoist_Init = c(0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3)
+)
 }
 \arguments{
-\item{climdata}{a data.frame of hourly weather variables in same format as \code{\link[microclimc:weather]{microclimc::weather()}}.
+\item{climdata}{a data.frame of hourly weather variables in same format as \code{\link[=weather]{weather()}}.
 Column obs_time must give times in GMT/UTC.}
 
 \item{prec}{a vector of daily or hourly recipitation values (mm).}
@@ -54,7 +78,7 @@ starting from 0, and more closely spaced near the surface.}
 
 \item{ERR}{Integrator error tolerance for soil temperature calculations.}
 
-\item{soiltype}{soil type as for \code{\link[microclimc:soilparams]{microclimc::soilparams()}}. Set to NA to use soil parameters
+\item{soiltype}{soil type as for \code{\link[=soilparams]{soilparams()}}. Set to NA to use soil parameters
 specified below.}
 
 \item{PE}{Air entry potentials (J/kg) (19 values descending through soil for specified soil
@@ -97,6 +121,8 @@ a list with the following components:
 
 \code{plant} a data.frame of plant transpiration rates (g/m^2/hr), leaf water potentials
 (J/kg) and root water potential (J/kg) at each of the 10 specified depths.
+
+\code{nmrout} full NicheMapR output
 }
 \description{
 Wrapper function for running NicheMapR to derive soil moistures

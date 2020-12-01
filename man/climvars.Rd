@@ -4,7 +4,8 @@
 \name{climvars}
 \alias{climvars}
 \title{A list of climate variables}
-\format{a list with the following elements:
+\format{
+a list with the following elements:
 \describe{
 \item{tair}{air temperature at reference height (deg C)}
 \item{relhum}{relative humidity at reference height (percentage)}
@@ -17,7 +18,8 @@
 \item{psi_h}{diabatic correction factor for above canopy heat transfer}
 \item{psi_m}{diabatic correction factor for above canopy momentum transfer}
 \item{phi_m}{diabatic correction factor for below canopy momentum transfer}
-}}
+}
+}
 \usage{
 climvars
 }
