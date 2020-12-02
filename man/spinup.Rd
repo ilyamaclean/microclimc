@@ -4,10 +4,28 @@
 \alias{spinup}
 \title{Model spin-up for first time-step}
 \usage{
-spinup(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = NA,
-  sdepth = 2, zu = 2, theta = 0.3, thetap = 0.3, merid = 0,
-  dst = 0, n = 0.6, plotout = TRUE, steps = 200, metopen = TRUE,
-  windhgt = 2, zlafact = 1, surfwet = 1)
+spinup(
+  climdata,
+  vegp,
+  soilp,
+  lat,
+  long,
+  edgedist = 100,
+  reqhgt = NA,
+  sdepth = 2,
+  zu = 2,
+  theta = 0.3,
+  thetap = 0.3,
+  merid = 0,
+  dst = 0,
+  n = 0.6,
+  plotout = TRUE,
+  steps = 200,
+  metopen = TRUE,
+  windhgt = 2,
+  zlafact = 1,
+  surfwet = 1
+)
 }
 \arguments{
 \item{climdata}{a data.frame of climate variables needed to run the run the model (dataset should follow format of \code{\link[=weather]{weather()}})}

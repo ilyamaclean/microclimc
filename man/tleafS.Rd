@@ -4,8 +4,25 @@
 \alias{tleafS}
 \title{Steady-state leaf and air temperature}
 \usage{
-tleafS(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, Rabs, vegem,
-  soilb, Psie, Smax, surfwet, leafdens)
+tleafS(
+  tair,
+  tground,
+  relhum,
+  pk,
+  theta,
+  gtt,
+  gt0,
+  gha,
+  gv,
+  gL,
+  Rabs,
+  vegem,
+  soilb,
+  Psie,
+  Smax,
+  surfwet,
+  leafdens
+)
 }
 \arguments{
 \item{tair}{air temperature at reference height (deg C)}
@@ -28,6 +45,8 @@ and \code{\link[=gcanopy]{gcanopy()}}}
 
 \item{gv}{combined boundary layer and stomatal conductance of leaf}
 
+\item{gL}{combined boundary layer and leaf-air conductance given by 1/(1/gha+1/(uz*ph))}
+
 \item{Rabs}{radiation absorbed by leaf as returned by e.g. \code{\link[=leafabs]{leafabs()}}}
 
 \item{soilb}{Shape parameter for Campbell soil model (dimensionless, > 1) as returned by
@@ -35,7 +54,7 @@ and \code{\link[=gcanopy]{gcanopy()}}}
 
 \item{Psie}{Soil matric potential (J / m^3) as returned by \code{\link[=soilinit]{soilinit()}}}
 
-\item{Smax}{Volumetric water content at saturation \link{m3 / m3}}
+\item{Smax}{Volumetric water content at saturation (m3 / m3)}
 
 \item{surfwet}{proportion of leaf surface acting as free water surface}
 

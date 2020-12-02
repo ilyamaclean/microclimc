@@ -4,10 +4,29 @@
 \alias{runonestep}
 \title{Run canopy model for a single time step}
 \usage{
-runonestep(climvars, previn, vegp, soilp, timestep, tme, lat, long,
-  edgedist = 1000, sdepth = 2, reqhgt = NA, zu = 2, theta = 0.3,
-  thetap = 0.3, merid = 0, dst = 0, n = 0.6, metopen = TRUE,
-  windhgt = 2, zlafact = 1, surfwet = 1)
+runonestep(
+  climvars,
+  previn,
+  vegp,
+  soilp,
+  timestep,
+  tme,
+  lat,
+  long,
+  edgedist = 1000,
+  sdepth = 2,
+  reqhgt = NA,
+  zu = 2,
+  theta = 0.3,
+  thetap = 0.3,
+  merid = 0,
+  dst = 0,
+  n = 0.6,
+  metopen = TRUE,
+  windhgt = 2,
+  zlafact = 1,
+  surfwet = 1
+)
 }
 \arguments{
 \item{climvars}{a of climate variables needed to run the run the model for one timestep (see dataset \code{\link[=climvars]{climvars()}})}

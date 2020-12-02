@@ -411,12 +411,12 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Vapour pressure
   esj<-0.6108*exp(17.27*previn$tc/(previn$tc+237.3))
   eaj<-(previn$rh/100)*esj
-  estl<-satvap(previn$tleaf,ice = TRUE)
-  esref<-satvap(mtref,ice=TRUE)
+  estl<-satvap(previn$tleaf)
+  esref<-satvap(mtref)
   eref<-(mrh/100)*esref
   delta <- 4098*(0.6108*exp(17.27*previn$tleaf/(previn$tleaf+237.3)))/(previn$tleaf+237.3)^2
   rhsoil<-soilrh(theta,soilp$b,-soilp$psi_e,soilp$Smax, previn$soiltc[1])
-  esoil<-rhsoil*satvap(previn$soiltc[1],ice = TRUE)
+  esoil<-rhsoil*satvap(previn$soiltc[1])
   # Test whether steady state
   PAIm<-2*vegp$PAI/zth
   gv2<-(PAIm/zth)*gv
@@ -734,7 +734,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   psi_m<-abod$psi_m; psi_h<-abod$psi_h; phi_m<-cand$phi_m; phi_h<-cand$phi_h
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
-  es <- satvap(tair,ice=TRUE)
+  es <- satvap(tair)
   ea<-(relhum/100)*es
   tfrost <- dewpoint(ea, tair)
   tcan<-ifelse(tcan<tfrost,tfrost,tcan)

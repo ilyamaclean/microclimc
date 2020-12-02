@@ -4,9 +4,26 @@
 \alias{leafabs}
 \title{Calculates radiation absorbed by leaf}
 \usage{
-leafabs(Rsw, tme, tair, tground, lat, long, PAI, pLAI, x, refls, refw,
-  refg, vegem, skyem, dp = NA, merid = round(long/15, 0) * 15,
-  dst = 0, clump = 0)
+leafabs(
+  Rsw,
+  tme,
+  tair,
+  tground,
+  lat,
+  long,
+  PAI,
+  pLAI,
+  x,
+  refls,
+  refw,
+  refg,
+  vegem,
+  skyem,
+  dp = NA,
+  merid = round(long/15, 0) * 15,
+  dst = 0,
+  clump = 0
+)
 }
 \arguments{
 \item{Rsw}{Incoming shortwave radiation (W / m2)}

@@ -4,7 +4,9 @@
 \name{dailyprecip}
 \alias{dailyprecip}
 \title{A vector of daily precipitation}
-\format{An object of class \code{numeric} of length 365.}
+\format{
+An object of class \code{numeric} of length 365.
+}
 \usage{
 dailyprecip
 }

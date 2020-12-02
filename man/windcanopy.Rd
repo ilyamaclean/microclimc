@@ -4,8 +4,20 @@
 \alias{windcanopy}
 \title{Calculates wind profile for individual canopy layers}
 \usage{
-windcanopy(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
-  iw = 0.5, phi_m = 1, edgedist = NA, uref, zref = hgt + 2)
+windcanopy(
+  uh,
+  z,
+  hgt,
+  PAI = 3,
+  x = 1,
+  lw = 0.05,
+  cd = 0.2,
+  iw = 0.5,
+  phi_m = 1,
+  edgedist = NA,
+  uref,
+  zref = hgt + 2
+)
 }
 \arguments{
 \item{uh}{wind speed at top of canopy layer (m /s)}

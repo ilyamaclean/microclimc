@@ -4,8 +4,18 @@
 \alias{abovecanopytemp}
 \title{Calculates temperature above canopy}
 \usage{
-abovecanopytemp(tz, uz, zu, zo, H, hgt, PAI, zm0 = 0.004, pk = 101.3,
-  psi_h = 0)
+abovecanopytemp(
+  tz,
+  uz,
+  zu,
+  zo,
+  H,
+  hgt,
+  PAI,
+  zm0 = 0.004,
+  pk = 101.3,
+  psi_h = 0
+)
 }
 \arguments{
 \item{tz}{temperature at height \code{zu} above the canopy (deg C)}

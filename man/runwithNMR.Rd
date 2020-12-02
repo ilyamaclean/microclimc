@@ -4,11 +4,28 @@
 \alias{runwithNMR}
 \title{Runs microclimate model in hourly timesteps with NicheMapR}
 \usage{
-runwithNMR(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
-  slope = 0, aspect = 0, metopen = TRUE, windhgt = 2,
-  surfwet = 1, groundem = 0.95, ERR = 1.5, cap = 1, hori = rep(0,
-  36), maxpool = 1000, rainmult = 1, SoilMoist_Init = c(0.1, 0.12,
-  0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3))
+runwithNMR(
+  climdata,
+  prec,
+  vegp,
+  soilp,
+  reqhgt,
+  lat,
+  long,
+  altt = 0,
+  slope = 0,
+  aspect = 0,
+  metopen = TRUE,
+  windhgt = 2,
+  surfwet = 1,
+  groundem = 0.95,
+  ERR = 1.5,
+  cap = 1,
+  hori = rep(0, 36),
+  maxpool = 1000,
+  rainmult = 1,
+  SoilMoist_Init = c(0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3)
+)
 }
 \arguments{
 \item{climdata}{data.frame of climate variables needed to run the run the model. The dataset should follow format

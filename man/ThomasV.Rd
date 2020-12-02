@@ -4,8 +4,22 @@
 \alias{ThomasV}
 \title{Thomas algorithm for solving simultanious vapour fluxes}
 \usage{
-ThomasV(Vo, tn, pk, theta, thetap, relhum, tair, tsoil, zth, gt, Vflux,
-  f = 0.6, previn, soilp)
+ThomasV(
+  Vo,
+  tn,
+  pk,
+  theta,
+  thetap,
+  relhum,
+  tair,
+  tsoil,
+  zth,
+  gt,
+  Vflux,
+  f = 0.6,
+  previn,
+  soilp
+)
 }
 \arguments{
 \item{Vo}{a vector of air vapour concentrations for each canopy node in the previos timestep (mol fraction)}
