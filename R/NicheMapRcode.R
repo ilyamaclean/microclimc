@@ -580,6 +580,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   uf[uf<0.065]<-0.065
   hgt2<-ifelse(hgt<snowdep,snowdep,hgt)
   uh<-(uf/0.4)*log((hgt2-d)/zm)
+  uh[uh<uf]<-uf[uh<uf]
   sas <- which(reqhgt>=snowdep)
   sbs <- which(reqhgt<snowdep)
   # Below snow
