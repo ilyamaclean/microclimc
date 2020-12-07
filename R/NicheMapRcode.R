@@ -338,7 +338,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   tides<-matrix(data=0,nrow=24*ndays,ncol=3)
   TIMAXS<-c(1,1,0,0)
   TIMINS<-c(0,0,1,1)
-  LAI<-pLAI*PAI
+  LAI<-pLAI*PAI 
   micro<-list(tides=tides,microinput=microinput,doy=doy,SLES=SLES1,DEP=DEP,Nodes=Nodes,
               MAXSHADES=MAXSHADES,MINSHADES=MINSHADES,TIMAXS=TIMAXS,TIMINS=TIMINS,TMAXX=TMAXX1,
               TMINN=TMINN1,RHMAXX=RHMAXX1,RHMINN=RHMINN1,CCMAXX=CCMAXX1,CCMINN=CCMINN1,
