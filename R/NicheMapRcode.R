@@ -348,27 +348,27 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
               RAINFALL=RAINFALL1,tannulrun=deepsoil,PE=PE,KS=KS,BB=BB,BD=BD,DD=DD,L=L,LAI=LAI)
   microut<-microclimate(micro)
   
-  metout<-as.data.frame(microut$metout)
-  soil<-as.data.frame(microut$soil)
-  shadsoil<-as.data.frame(microut$shadsoil)
-  soilmoist<-as.data.frame(microut$soilmoist)
-  shadmoist <- as.data.frame(microut$shadmoist)
-  humid <- as.data.frame(microut$humid)
-  shadhumid <- as.data.frame(microut$shadhumid)
-  soilpot <- as.data.frame(microut$soilpot)
-  shadpot <- as.data.frame(microut$shadpot)
-  plant <- as.data.frame(microut$plant)
-  shadplant <- as.data.frame(microut$shadplant)
+  metout<-microut$metout
+  soil<-microut$soil
+  shadsoil<-microut$shadsoil
+  soilmoist<-microut$soilmoist
+  shadmoist <- microut$shadmoist
+  humid <- microut$humid
+  shadhumid <- microut$shadhumid
+  soilpot <- microut$soilpot
+  shadpot <- microut$shadpot
+  plant <- microut$plant
+  shadplant <- microut$shadplant
   
   if (snowmodel == 1) {
-    snow <- as.data.frame(microut$sunsnow)
-    shdsnow <- as.data.frame(microut$shdsnow)
+    snow <- microut$sunsnow
+    shdsnow <- microut$shdsnow
   } else snow <- 0
   
   
-  drlam <- as.data.frame(microut$drlam)
-  drrlam <- as.data.frame(microut$drrlam)
-  srlam <- as.data.frame(microut$srlam)
+  drlam <- microut$drlam
+  drrlam <- microut$drrlam
+  srlam <- microut$srlam
   
   timeinterval = 365
   
@@ -403,6 +403,12 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
                         DEP = DEP, drlam = drlam, drrlam = drrlam, 
                         srlam = srlam, dates = dates, dates2 = dates2)
   }
+  
+  metout <- data.frame(metout)
+  soil <- data.frame(soil)
+  soilmoist <- data.frame(soilmoist)
+  snow <- data.frame(snow)
+  plant <- data.frame(plant)
   
   return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
 }
