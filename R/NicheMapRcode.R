@@ -293,10 +293,11 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (max(snowtest)>0) snowmodel<-1
   RUF<-roughlength(Veghyt,mean(PAI),0.0003)
   D0<-zeroplanedis(Veghyt, mean(PAI))
+  # now it runs shade (runshade=1)
   microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
                 HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
                 microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
-                rainmult,0,1,maxpool,0,snowmodel,rainmelt,
+                rainmult,runshade=1,1,maxpool,0,snowmodel,rainmelt,
                 0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
                 500,0,0,fail,0,intercept,grasshade,0,0,D0)
   doy1<-matrix(data=0,nrow=ndays,ncol=1)
@@ -346,14 +347,64 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
               soilinit=soilinit,hori=hori,TAI=TAI,soilprops=soilprops,moists=moists1,
               RAINFALL=RAINFALL1,tannulrun=deepsoil,PE=PE,KS=KS,BB=BB,BD=BD,DD=DD,L=L,LAI=LAI)
   microut<-microclimate(micro)
+  
   metout<-as.data.frame(microut$metout)
   soil<-as.data.frame(microut$soil)
+  shadsoil<-as.data.frame(microut$shadsoil)
   soilmoist<-as.data.frame(microut$soilmoist)
-  plant<-as.data.frame(microut$plant)
+  shadmoist <- as.data.frame(microut$shadmoist)
+  humid <- as.data.frame(microut$humid)
+  shadhumid <- as.data.frame(microut$shadhumid)
+  soilpot <- as.data.frame(microut$soilpot)
+  shadpot <- as.data.frame(microut$shadpot)
+  plant <- as.data.frame(microut$plant)
+  shadplant <- as.data.frame(microut$shadplant)
+  
   if (snowmodel == 1) {
     snow <- as.data.frame(microut$sunsnow)
+    shdsnow <- as.data.frame(microut$shdsnow)
   } else snow <- 0
-  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
+  
+  
+  drlam <- as.data.frame(microut$drlam)
+  drrlam <- as.data.frame(microut$drrlam)
+  srlam <- as.data.frame(microut$srlam)
+  
+  timeinterval = 365
+  
+  days <- rep(seq(1, timeinterval * nyears), 24)
+  days <- days[order(days)]
+  dates <- days + metout[, 2]/60/24 - 1
+  dates2 <- seq(1, timeinterval * nyears)
+  
+  
+  if (snowmodel == 1) {
+    nmrout_full <- list(soil = soil, shadsoil = shadsoil, 
+                        metout = metout, shadmet = shadmet, soilmoist = soilmoist, 
+                        shadmoist = shadmoist, humid = humid, shadhumid = shadhumid, 
+                        soilpot = soilpot, shadpot = shadpot, sunsnow = snow, 
+                        shdsnow = shdsnow, plant = plant, shadplant = shadplant, 
+                        RAINFALL = RAINFALL, ndays = ndays, elev = ALTT, 
+                        REFL = REFL[1], longlat = c(x[1], x[2]), nyears = nyears, 
+                        timeinterval = timeinterval, minshade = MINSHADES, 
+                        maxshade = MAXSHADES, DEP = DEP, drlam = drlam, 
+                        drrlam = drrlam, srlam = srlam, dates = dates, 
+                        dates2 = dates2)
+  }
+  else {
+    nmrout_full <- list(soil = soil, shadsoil = shadsoil, 
+                        metout = metout, shadmet = shadmet, soilmoist = soilmoist, 
+                        shadmoist = shadmoist, humid = humid, shadhumid = shadhumid, 
+                        soilpot = soilpot, shadpot = shadpot, plant = plant, 
+                        shadplant = shadplant, RAINFALL = RAINFALL, 
+                        ndays = ndays, elev = ALTT, REFL = REFL[1], 
+                        longlat = c(x[1], x[2]), nyears = nyears, timeinterval = timeinterval, 
+                        minshade = MINSHADES, maxshade = MAXSHADES, 
+                        DEP = DEP, drlam = drlam, drrlam = drrlam, 
+                        srlam = srlam, dates = dates, dates2 = dates2)
+  }
+  
+  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
 }
 #' Internal function for calculating lead absorbed radiation on vector
 .leafabs2 <-function(Rsw, tme, tair, tground, lat, long, PAIt, PAIu, pLAI, x, refls, refw, refg, vegem, skyem, dp,
