@@ -1025,6 +1025,17 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
     warning("Height out of range. Output climate identical to input")
   }
-  return(list(metout = metout, nmrout = nmrout))
+  
+  climdata$temp <- metout$Tloc
+  climdata$relhum <- metout$RHloc
+  climdata$swrad <- metout$RSWloc
+  climdata$windspeed <- metout$windspeed
+  
+  nmrout2<-runNMR(climdata=climdata,prec=prec,lat=lat,long=long,
+                  Usrhyt=1.95,Veghyt=hgt,Refhyt=reqhgt,PAIt,vegp$x,pLAI,
+                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
+                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
+  
+  return(list(metout = metout, nmrout = nmrout2))
 }
 
