@@ -349,6 +349,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   microut<-microclimate(micro)
   
   metout<-microut$metout
+  shadmet<-microut$shadmet
   soil<-microut$soil
   shadsoil<-microut$shadsoil
   soilmoist<-microut$soilmoist
