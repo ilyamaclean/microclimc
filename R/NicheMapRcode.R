@@ -436,7 +436,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
     snow <- data.frame(snow)
     plant <- data.frame(plant)
 
-    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))  
+    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
   }
 }
 #' Internal function for calculating lead absorbed radiation on vector
@@ -1067,7 +1067,8 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
 runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0, slope = 0,
                        aspect = 0,  metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95,
                        ERR = 1.5, cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
-                       SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
+                       SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
+                       animal = FALSE) {
   # (1) Unpack variables
   tair<-climdata$temp
   relhum<-climdata$relhum
@@ -1089,7 +1090,8 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   DD = rep(2.65, 19)
   nmrout<-runNMR(climdata,prec,lat,long,1.95,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
-                 ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
+                 ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
+                 animal=animal)
   if (reqhgt < 0) {
     dep<-c(0,2.5,5,10,15,20,30,50,100,200)
     soilz<- -reqhgt*100
@@ -1118,7 +1120,8 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   nmrout2<-runNMR(climdata=climdata,prec=prec,lat=lat,long=long,
                   Usrhyt=1.95,Veghyt=hgt,Refhyt=reqhgt,PAIt,vegp$x,pLAI,
                   vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
-                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
+                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
+                  animal=animal)
 
   return(list(metout = metout, nmrout = nmrout2$nmrout))
 }
