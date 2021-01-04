@@ -359,70 +359,85 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
               RAINFALL=RAINFALL1,tannulrun=deepsoil,PE=PE,KS=KS,BB=BB,BD=BD,DD=DD,L=L,LAI=LAI)
   microut<-microclimate(micro)
 
-  metout<-microut$metout
-  shadmet<-microut$shadmet
-  soil<-microut$soil
-  shadsoil<-microut$shadsoil
-  soilmoist<-microut$soilmoist
-  shadmoist <- microut$shadmoist
-  humid <- microut$humid
-  shadhumid <- microut$shadhumid
-  soilpot <- microut$soilpot
-  shadpot <- microut$shadpot
-  plant <- microut$plant
-  shadplant <- microut$shadplant
+  if(animal==FALSE){
+    metout<-as.data.frame(microut$metout)
+    soil<-as.data.frame(microut$soil)
+    soilmoist<-as.data.frame(microut$soilmoist)
+    plant<-as.data.frame(microut$plant)
 
-  if (snowmodel == 1) {
-    snow <- microut$sunsnow
-    shdsnow <- microut$shdsnow
-  } else snow <- 0
+    if (snowmodel == 1) {
+      snow <- as.data.frame(microut$sunsnow)
+    } else snow <- 0
 
-
-  drlam <- microut$drlam
-  drrlam <- microut$drrlam
-  srlam <- microut$srlam
-
-  timeinterval = 365
-
-  days <- rep(seq(1, timeinterval * nyears), 24)
-  days <- days[order(days)]
-  dates <- days + metout[, 2]/60/24 - 1
-  dates2 <- seq(1, timeinterval * nyears)
-
-
-  if (snowmodel == 1) {
-    nmrout_full <- list(soil = soil, shadsoil = shadsoil,
-                        metout = metout, shadmet = shadmet, soilmoist = soilmoist,
-                        shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
-                        soilpot = soilpot, shadpot = shadpot, sunsnow = snow,
-                        shdsnow = shdsnow, plant = plant, shadplant = shadplant,
-                        RAINFALL = RAINFALL, ndays = ndays, elev = ALTT,
-                        REFL = REFL[1], longlat = c(x[1], x[2]), nyears = nyears,
-                        timeinterval = timeinterval, minshade = MINSHADES,
-                        maxshade = MAXSHADES, DEP = DEP, drlam = drlam,
-                        drrlam = drrlam, srlam = srlam, dates = dates,
-                        dates2 = dates2)
-  }
-  else {
-    nmrout_full <- list(soil = soil, shadsoil = shadsoil,
-                        metout = metout, shadmet = shadmet, soilmoist = soilmoist,
-                        shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
-                        soilpot = soilpot, shadpot = shadpot, plant = plant,
-                        shadplant = shadplant, RAINFALL = RAINFALL,
-                        ndays = ndays, elev = ALTT, REFL = REFL[1],
-                        longlat = c(x[1], x[2]), nyears = nyears, timeinterval = timeinterval,
-                        minshade = MINSHADES, maxshade = MAXSHADES,
-                        DEP = DEP, drlam = drlam, drrlam = drrlam,
-                        srlam = srlam, dates = dates, dates2 = dates2)
+    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
   }
 
-  metout <- data.frame(metout)
-  soil <- data.frame(soil)
-  soilmoist <- data.frame(soilmoist)
-  snow <- data.frame(snow)
-  plant <- data.frame(plant)
+  if(animal == TRUE){
+    metout<-microut$metout
+    shadmet<-microut$shadmet
+    soil<-microut$soil
+    shadsoil<-microut$shadsoil
+    soilmoist<-microut$soilmoist
+    shadmoist <- microut$shadmoist
+    humid <- microut$humid
+    shadhumid <- microut$shadhumid
+    soilpot <- microut$soilpot
+    shadpot <- microut$shadpot
+    plant <- microut$plant
+    shadplant <- microut$shadplant
 
-  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
+    if (snowmodel == 1) {
+      snow <- microut$sunsnow
+      shdsnow <- microut$shdsnow
+    } else snow <- 0
+
+
+    drlam <- microut$drlam
+    drrlam <- microut$drrlam
+    srlam <- microut$srlam
+
+    timeinterval = 365
+
+    days <- rep(seq(1, timeinterval * nyears), 24)
+    days <- days[order(days)]
+    dates <- days + metout[, 2]/60/24 - 1
+    dates2 <- seq(1, timeinterval * nyears)
+
+
+    if (snowmodel == 1) {
+      nmrout_full <- list(soil = soil, shadsoil = shadsoil,
+                          metout = metout, shadmet = shadmet, soilmoist = soilmoist,
+                          shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
+                          soilpot = soilpot, shadpot = shadpot, sunsnow = snow,
+                          shdsnow = shdsnow, plant = plant, shadplant = shadplant,
+                          RAINFALL = RAINFALL, ndays = ndays, elev = ALTT,
+                          REFL = REFL[1], longlat = c(x[1], x[2]), nyears = nyears,
+                          timeinterval = timeinterval, minshade = MINSHADES,
+                          maxshade = MAXSHADES, DEP = DEP, drlam = drlam,
+                          drrlam = drrlam, srlam = srlam, dates = dates,
+                          dates2 = dates2)
+    }
+    else {
+      nmrout_full <- list(soil = soil, shadsoil = shadsoil,
+                          metout = metout, shadmet = shadmet, soilmoist = soilmoist,
+                          shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
+                          soilpot = soilpot, shadpot = shadpot, plant = plant,
+                          shadplant = shadplant, RAINFALL = RAINFALL,
+                          ndays = ndays, elev = ALTT, REFL = REFL[1],
+                          longlat = c(x[1], x[2]), nyears = nyears, timeinterval = timeinterval,
+                          minshade = MINSHADES, maxshade = MAXSHADES,
+                          DEP = DEP, drlam = drlam, drrlam = drrlam,
+                          srlam = srlam, dates = dates, dates2 = dates2)
+    }
+
+    metout <- data.frame(metout)
+    soil <- data.frame(soil)
+    soilmoist <- data.frame(soilmoist)
+    snow <- data.frame(snow)
+    plant <- data.frame(plant)
+
+    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))  
+  }
 }
 #' Internal function for calculating lead absorbed radiation on vector
 .leafabs2 <-function(Rsw, tme, tair, tground, lat, long, PAIt, PAIu, pLAI, x, refls, refw, refg, vegem, skyem, dp,
