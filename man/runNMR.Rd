@@ -34,7 +34,8 @@ runNMR(
   hori = rep(0, 36),
   maxpool = 1000,
   rainmult = 1,
-  SoilMoist_Init = c(0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3)
+  SoilMoist_Init = c(0.1, 0.12, 0.15, 0.2, 0.25, 0.3, 0.3, 0.3, 0.3, 0.3),
+  animal = FALSE
 )
 }
 \arguments{
@@ -167,4 +168,7 @@ mmx <- max(soilm$WC2.5cm,soilm$WC30cm)
 plot(soilm$WC2.5cm~dday, type="l", col = "red", ylim=c(mmn,mmx), ylab = "Soil moisture")
 par(new = T)
 plot(soilm$WC30cm~dday, type="l", col = "blue", ylim=c(mmn,mmx), ylab = "", xlab = "")
+}
+\author{
+Ilya Maclean (i.m.d.maclean@exeter.ac.uk) and Urtzi Urzelai (urtzi.enriquez@gmail.com)
 }

@@ -62,6 +62,7 @@
 #' air temperatures for heights below canopy (see [runwithNMR()]. If `soiltype` is given, the subsequent
 #' soil parameters are computed from soil type.  If `soiltype` is NA, soil paramaters must be specified.
 #'
+#' @author Ilya Maclean (i.m.d.maclean@exeter.ac.uk) and Urtzi Urzelai (urtzi.enriquez@gmail.com)
 #' @import microctools
 #' @import NicheMapR
 #' @export
