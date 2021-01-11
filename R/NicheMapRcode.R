@@ -96,7 +96,8 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
                    DEP = c(0,2.5,5,10,15,20,30,50,100,200), ALTT = 0, SLOPE = 0, ASPECT = 0,
                    ERR = 1.5, soiltype = "Loam", PE=rep(1.1,19), KS=rep(0.0037,19), BB=rep(4.5,19),
                    BD=rep(1.3,19), DD=rep(2.65,19), cap = 1, hori = rep(0,36), maxpool = 1000,
-                   rainmult = 1, SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
+                   rainmult = 1, SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
+                   animal = FALSE) {
   if (Veghyt > 2) Veghyt<-2
   loc<-c(long,lat)
   tmehr<-as.POSIXlt(climdata$obs_time,tz="UTC")
@@ -293,12 +294,23 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (max(snowtest)>0) snowmodel<-1
   RUF<-roughlength(Veghyt,mean(PAI),0.0003)
   D0<-zeroplanedis(Veghyt, mean(PAI))
-  microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
-                HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
-                microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
-                rainmult,0,1,maxpool,0,snowmodel,rainmelt,
-                0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
-                500,0,0,fail,0,intercept,grasshade,0,0,D0)
+  if (animal == FALSE){
+    microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
+                  HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
+                  microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
+                  rainmult,runshade=0,1,maxpool,0,snowmodel,rainmelt,
+                  0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
+                  500,0,0,fail,0,intercept,grasshade,0,0,D0)
+  }
+  if (animal == TRUE){
+    # run shade (runshade=1)
+    microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
+                  HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
+                  microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
+                  rainmult,runshade=1,1,maxpool,0,snowmodel,rainmelt,
+                  0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
+                  500,0,0,fail,0,intercept,grasshade,0,0,D0)
+  }
   doy1<-matrix(data=0,nrow=ndays,ncol=1)
   SLES1<-matrix(data=0,nrow=ndays,ncol=1)
   MAXSHADES1<-matrix(data=0,nrow=ndays,ncol=1)
@@ -346,14 +358,86 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
               soilinit=soilinit,hori=hori,TAI=TAI,soilprops=soilprops,moists=moists1,
               RAINFALL=RAINFALL1,tannulrun=deepsoil,PE=PE,KS=KS,BB=BB,BD=BD,DD=DD,L=L,LAI=LAI)
   microut<-microclimate(micro)
-  metout<-as.data.frame(microut$metout)
-  soil<-as.data.frame(microut$soil)
-  soilmoist<-as.data.frame(microut$soilmoist)
-  plant<-as.data.frame(microut$plant)
-  if (snowmodel == 1) {
-    snow <- as.data.frame(microut$sunsnow)
-  } else snow <- 0
-  return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
+
+  if(animal==FALSE){
+    metout<-as.data.frame(microut$metout)
+    soil<-as.data.frame(microut$soil)
+    soilmoist<-as.data.frame(microut$soilmoist)
+    plant<-as.data.frame(microut$plant)
+
+    if (snowmodel == 1) {
+      snow <- as.data.frame(microut$sunsnow)
+    } else snow <- 0
+
+    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
+  }
+
+  if(animal == TRUE){
+    metout<-microut$metout
+    shadmet<-microut$shadmet
+    soil<-microut$soil
+    shadsoil<-microut$shadsoil
+    soilmoist<-microut$soilmoist
+    shadmoist <- microut$shadmoist
+    humid <- microut$humid
+    shadhumid <- microut$shadhumid
+    soilpot <- microut$soilpot
+    shadpot <- microut$shadpot
+    plant <- microut$plant
+    shadplant <- microut$shadplant
+
+    if (snowmodel == 1) {
+      snow <- microut$sunsnow
+      shdsnow <- microut$shdsnow
+    } else snow <- 0
+
+
+    drlam <- microut$drlam
+    drrlam <- microut$drrlam
+    srlam <- microut$srlam
+
+    timeinterval = 365
+
+    days <- rep(seq(1, timeinterval * nyears), 24)
+    days <- days[order(days)]
+    dates <- days + metout[, 2]/60/24 - 1
+    dates2 <- seq(1, timeinterval * nyears)
+
+
+    if (snowmodel == 1) {
+      nmrout_full <- list(soil = soil, shadsoil = shadsoil,
+                          metout = metout, shadmet = shadmet, soilmoist = soilmoist,
+                          shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
+                          soilpot = soilpot, shadpot = shadpot, sunsnow = snow,
+                          shdsnow = shdsnow, plant = plant, shadplant = shadplant,
+                          RAINFALL = RAINFALL, ndays = ndays, elev = ALTT,
+                          REFL = REFL[1], longlat = c(x[1], x[2]), nyears = nyears,
+                          timeinterval = timeinterval, minshade = MINSHADES,
+                          maxshade = MAXSHADES, DEP = DEP, drlam = drlam,
+                          drrlam = drrlam, srlam = srlam, dates = dates,
+                          dates2 = dates2)
+    }
+    else {
+      nmrout_full <- list(soil = soil, shadsoil = shadsoil,
+                          metout = metout, shadmet = shadmet, soilmoist = soilmoist,
+                          shadmoist = shadmoist, humid = humid, shadhumid = shadhumid,
+                          soilpot = soilpot, shadpot = shadpot, plant = plant,
+                          shadplant = shadplant, RAINFALL = RAINFALL,
+                          ndays = ndays, elev = ALTT, REFL = REFL[1],
+                          longlat = c(x[1], x[2]), nyears = nyears, timeinterval = timeinterval,
+                          minshade = MINSHADES, maxshade = MAXSHADES,
+                          DEP = DEP, drlam = drlam, drrlam = drrlam,
+                          srlam = srlam, dates = dates, dates2 = dates2)
+    }
+
+    metout <- data.frame(metout)
+    soil <- data.frame(soil)
+    soilmoist <- data.frame(soilmoist)
+    snow <- data.frame(snow)
+    plant <- data.frame(plant)
+
+    return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
+  }
 }
 #' Internal function for calculating lead absorbed radiation on vector
 .leafabs2 <-function(Rsw, tme, tair, tground, lat, long, PAIt, PAIu, pLAI, x, refls, refw, refg, vegem, skyem, dp,
@@ -984,7 +1068,8 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
 runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0, slope = 0,
                        aspect = 0,  metopen = TRUE, windhgt = 2, surfwet = 1, groundem = 0.95,
                        ERR = 1.5, cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
-                       SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3)) {
+                       SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
+                       animal = FALSE) {
   # (1) Unpack variables
   tair<-climdata$temp
   relhum<-climdata$relhum
@@ -1006,7 +1091,8 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   DD = rep(2.65, 19)
   nmrout<-runNMR(climdata,prec,lat,long,1.95,hgt,2,PAIt,vegp$x,pLAI,
                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
-                 ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init)
+                 ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
+                 animal=animal)
   if (reqhgt < 0) {
     dep<-c(0,2.5,5,10,15,20,30,50,100,200)
     soilz<- -reqhgt*100
@@ -1026,6 +1112,17 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
     warning("Height out of range. Output climate identical to input")
   }
-  return(list(metout = metout, nmrout = nmrout))
-}
 
+  climdata$temp <- metout$Tloc
+  climdata$relhum <- metout$RHloc
+  climdata$swrad <- metout$RSWloc
+  climdata$windspeed <- metout$windspeed
+
+  nmrout2<-runNMR(climdata=climdata,prec=prec,lat=lat,long=long,
+                  Usrhyt=1.95,Veghyt=hgt,Refhyt=reqhgt,PAIt,vegp$x,pLAI,
+                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
+                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
+                  animal=animal)
+
+  return(list(metout = metout, nmrout = nmrout2$nmrout))
+}
