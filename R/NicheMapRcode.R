@@ -3,7 +3,7 @@
 #' @description Wrapper function for running NicheMapR to derive soil moistures
 #' @param climdata a data.frame of hourly weather variables in same format as [microclimc::weather()].
 #' Column obs_time must give times in GMT/UTC.
-#' @param prec a vector of daily or hourly recipitation values (mm).
+#' @param prec a vector of daily or hourly precipitation values (mm).
 #' @param lat latitude (decimal degrees, positive in northern hemisphere).
 #' @param long longitude (decimal degrees, negative west of Greenwich meridian).
 #' @param Usrhyt Local height (m) at which air temperature, wind speed and humidity are to be computed (see details).
@@ -565,7 +565,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   # cap upper limits of both tair and tleaf
   tmx<-pmax(tground+5,tair+5)
   tn<-ifelse(tn>tmx,tmx,tn)
-  tmx<-pmax(tground+30,tair+30)
+  tmx<-pmax(tground+20,tair+20)
   tleaf<-ifelse(tleaf>tmx,tmx,tleaf)
   # cap lower limits
   tmn<-tair-7

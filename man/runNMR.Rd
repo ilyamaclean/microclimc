@@ -42,7 +42,7 @@ runNMR(
 \item{climdata}{a data.frame of hourly weather variables in same format as \code{\link[=weather]{weather()}}.
 Column obs_time must give times in GMT/UTC.}
 
-\item{prec}{a vector of daily or hourly recipitation values (mm).}
+\item{prec}{a vector of daily or hourly precipitation values (mm).}
 
 \item{lat}{latitude (decimal degrees, positive in northern hemisphere).}
 
