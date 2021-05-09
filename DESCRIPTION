@@ -3,7 +3,8 @@ Type: Package
 Title: Below or above canopy microclimate modelling with R
 Version: 0.1.0
 Authors@R: c(
-    person("Ilya", "Maclean", email = "i.m.d.maclean@exeter.ac.uk", role = "cre"))
+    person("Ilya", "Maclean", email = "i.m.d.maclean@exeter.ac.uk", role = "cre"),
+    person("David", "Klinges", email = "dklinges@ufl.edu", role = "aut"))
 Maintainer: Ilya M. D. Maclean <i.m.d.maclean@exeter.ac.uk>
 Description: The functions in the microclimc package contain tools for 
     modelling the mechanistic processes that govern below or above canopy
