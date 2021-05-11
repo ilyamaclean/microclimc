@@ -789,6 +789,9 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
 #' it can be run multiple times without also running NicheMapR.
 runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen = TRUE, windhgt = 2,
                       surfwet = 1, groundem = 0.95) {
+  if (!metopen & windhgt < vegp$hgt) {
+    stop("When metopen is FALSE, windhgt must be above canopy\n")
+  }
   # (1) Unpack variables
   tme<-as.POSIXlt(climdata$obs_time)
   tair<-climdata$temp
@@ -1071,6 +1074,9 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
                        ERR = 1.5, cap = 1, hori = rep(0,36), maxpool =1000, rainmult = 1,
                        SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
                        animal = FALSE) {
+  if (!metopen & windhgt < vegp$hgt) {
+    stop("When metopen is FALSE, windhgt must be above canopy\n")
+  }
   # (1) Unpack variables
   tair<-climdata$temp
   relhum<-climdata$relhum

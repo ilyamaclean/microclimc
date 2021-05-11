@@ -1140,6 +1140,9 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
       stop("input reqhgt no recognised\n")
     } else  spinhgt <- vegp$hgt / 2
   } else spinhgt <- ifelse(is.na(reqhgt) == F & reqhgt > 0, reqhgt, NA)
+  if (!metopen & windhgt < vegp$hgt) {
+    stop("When metopen is FALSE, windhgt must be above canopy\n")
+  }
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   # Sort out soil moisture
   if (class(theta)!="matrix") {
