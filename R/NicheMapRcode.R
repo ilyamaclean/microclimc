@@ -130,7 +130,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   snowmelt<-1
   undercatch<-1
   rainmelt<-0.0125
-  grasshade<-ifelse(Veghyt<0.5,0,1)
+  grasshade<-ifelse(Veghyt<0.5,1,0) #VT
   ### LAI etc
   if (length(PAI)==1) {
     PAI<-rep(PAI,ndays)
