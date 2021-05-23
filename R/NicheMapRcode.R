@@ -138,7 +138,8 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
     PAI<-matrix(PAI,ncol=24,byrow=T)
     PAI<-apply(PAI,1,mean)
   }
-  if (length(PAI) != ndays) stop("PAI must be a single value or hourly/daily values")
+  if (length(PAI) > ndays & length(PAI) < ndays*24) stop("PAI must be a single value or hourly/daily values encompassing the entire timeseries.\n It appears that the length of PAI is greater than ndays but less than hourly (24 * ndays). If hourly, PAI must represent every hour of the timeseries. \n")
+  if (length(PAI) > 1 & length(PAI) < ndays) stop("PAI must be a single value or hourly/daily values encompassing the entire timeseries.\n It appears that the length of PAI is greater than 1 but less than ndays. If daily, PAI must represent every day of the timeseries.\n")
   MAXSHADES<-rep(100,ndays)
   # Work out canopy shading
   diftr<-cantransdif(PAI,LREFL,clump)
