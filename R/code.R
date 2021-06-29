@@ -227,8 +227,6 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' @param z height of canopy layer node (m)
 #' @param hgt height to top of canopy layer (m)
 #' @param PAI Plant Area Index of canopy layer (m / m)
-#' @param x the ratio of vertical to horizontal projections of leaf foliage
-#' @param lw mean leaf width (m)
 #' @param cd drag coefficient
 #' @param iw turbulence intensity
 #' @param phi_m diabatic correction factor
@@ -258,7 +256,7 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' cPAI <- cumsum(PAI)
 #' # ==== Calculate wind speed at top of canopy
 #' uref <- 2
-#' a <- microctools::attencoef(hgt, 3, 1)
+#' a <- microctools::attencoef(hgt, 3)
 #' uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 #' # === Calculate canopy profile (near edge)
 #' uz1 <- 0
@@ -278,13 +276,13 @@ windprofile <- function(ui, zi, zo, a = 2, PAI, hgt, psi_m = 0, hgtg = 0.05 * hg
 #' par(new = TRUE)
 #' plot(z ~ uz2, type = "l", xlab = "", ylab = "", xlim = c(0,1.5),
 #'      col = rgb(0,0,1,0.5), lwd = 2)
-windcanopy <- function(uh, z, hgt, PAI = 3, x = 1, lw = 0.05, cd = 0.2,
-                       iw = 0.5, phi_m  = 1, edgedist = NA, uref, zref = hgt + 2) {
-  a <- attencoef(hgt, PAI, x, lw, cd, iw, phi_m)
+windcanopy <- function(uh, z, hgt, PAI = 3, cd = 0.2, iw = 0.5, phi_m  = 1,
+                       edgedist = NA, uref, zref = hgt + 2) {
+  a <- attencoef(hgt, PAI, cd, iw, phi_m)
   uz <- uh * exp(a * ((z / hgt) - 1))
   # horizontal wind component
   if (is.na(edgedist) == F) {
-    a2 <- attencoef(hgt, PAI, 1/x, lw, cd, iw, phi_m)
+    a2 <- attencoef(hgt, PAI, cd, iw, phi_m)
     ur <- windprofile(uref, zref, z, 0.7989537, 1.146, 0.12)
     uwr<-suppressWarnings(2.5*log((z-0.08)/0.01476))
     uwr[uwr < 1] <- 1; uwr[is.na(uwr)] <- 1
@@ -391,7 +389,7 @@ leaftemp <- function(tair, relhum, pk, timestep, gt, gha, gv, Rabs, previn, vegp
   # Sort out thicknesses
   m<-length(gt)-1
   zth<-c(z[2:m]-z[1:(m-1)],vegp$hgt-(z[m]+z[m-1])/2)
-  zla<-mixinglength(zth,vegp$PAI,vegp$x,vegp$lw)*0.5*zlafact
+  zla<-mixinglength(zth,vegp$PAI)*0.5*zlafact
   # Sort out conductivitites
   gt<-0.5*gt+0.5*previn$gt
   gv1 <- 1 / ((1/previn$gv) + (1/previn$gha))
@@ -730,7 +728,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   zm<-roughlength(hgt, sum(vegp$PAI), vegp$zm0)
   uf<-(0.4*u2)/log(((hgt+2)-d)/zm)
   abod<-diabatic_cor(tair, pk, H, uf, (hgt+2), d)
-  cand<-diabatic_cor_can(tc, previn$uz, z, vegp$PAI, vegp$x, vegp$lw)
+  cand<-diabatic_cor_can(tc, previn$uz, z, vegp$PAI)
   psi_m<-abod$psi_m; psi_h<-abod$psi_h; phi_m<-cand$phi_m; phi_h<-cand$phi_h
   # Calculate temperatures and relative humidities for top of canopy
   tcan <- abovecanopytemp(tair,u2,zu+hgt,zabove,H,hgt,sum(vegp$PAI),vegp$zm0,pk,psi_h)
@@ -746,29 +744,29 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   eas<-0.6108*exp(17.27*tcan/(tcan+237.3))
   relhum<-(ea/eas)*100; relhum[relhum>100]<-100
   # ========== Calculate wind speed and turbulent conductances ======== #
-  ac<- attencoef(hgt,sum(vegp$PAI),vegp$x,vegp$lw,vegp$cd,vegp$iw,phi_m)
+  ac<- attencoef(hgt,sum(vegp$PAI),vegp$cd,vegp$iw,phi_m)
   uz<-rep(0,m); gt<-rep(0,m)
   uh<-windprofile(u2,hgt+2,hgt,ac[m],sum(vegp$PAI),hgt,psi_m,vegp$hgtg,vegp$zm0)
-  uz[m]<-windcanopy(uh,z[m],hgt,sum(vegp$PAI),vegp$x,vegp$lw,vegp$cd,vegp$iw[m],
+  uz[m]<-windcanopy(uh,z[m],hgt,sum(vegp$PAI),vegp$cd,vegp$iw[m],
                     phi_m,edgedist,u,zu)
-  gt[m]<-gcanopy(uh,z[m],z[m-1],tc[m],tc[m-1],hgt,sum(vegp$PAI),vegp$x,vegp$lw,
+  gt[m]<-gcanopy(uh,z[m],z[m-1],tc[m],tc[m-1],hgt,sum(vegp$PAI),
                  vegp$cd,vegp$iw[m],phi_m,pk)
   tc<-c(previn$soiltc[1],tc)
   # ========== Calculate canopy turbulences ========== #
   for (i in (m-1):1) {
     zi<-z[i+1]+0.5*zt[i]; zo<-z[i+1]-0.5*zt[i]
-    uh<-windcanopy(uh,zo,zi,sum(vegp$PAI[1:i]),vegp$x,vegp$lw,vegp$cd,vegp$iw[i],
+    uh<-windcanopy(uh,zo,zi,sum(vegp$PAI[1:i]),vegp$cd,vegp$iw[i],
                    phi_m,edgedist,u,zu)
     if (i>1) {
       z0<-z[i-1]
     } else z0<-0
-    uz[i]<-windcanopy(uh,zi,zo,sum(vegp$PAI[1:i]),vegp$x,vegp$lw,vegp$cd,
+    uz[i]<-windcanopy(uh,zi,zo,sum(vegp$PAI[1:i]),vegp$cd,
                       vegp$iw[i],phi_m,edgedist,u,zu)
-    gt[i]<-gcanopy(uh,z[i],z0,tc[i+1],tc[i],zi,sum(vegp$PAI[1:i]),vegp$x,vegp$lw,
+    gt[i]<-gcanopy(uh,z[i],z0,tc[i+1],tc[i],zi,sum(vegp$PAI[1:i]),
                    vegp$cd,vegp$iw[i],phi_m,pk)
   }
   # ========== Calculate conductivity to top of canopy and merge ============ #
-  gt[m+1]<-gcanopy(uh,hgt,z[m],tcan,tc[i+1],hgt,vegp$PAI[m]*0.5,vegp$x,vegp$lw,
+  gt[m+1]<-gcanopy(uh,hgt,z[m],tcan,tc[i+1],hgt,vegp$PAI[m]*0.5,
                    vegp$cd,vegp$iw[m],phi_m,pk)
   # Turbulent air conductivity and layer merge
   lmm<-layermerge(z,gt,hgt,timestep,ph)
@@ -794,7 +792,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   # conductivity and specific heat
   vden<-(vegp$PAI*vegp$thickw)
   mult<-1-vden
-  zla <- mixinglength(vegp$hgt, vegp$PAI, vegp$x, vegp$lw)*0.5*zlafact
+  zla <- mixinglength(vegp$hgt, vegp$PAI)*0.5*zlafact
   X<-tln$tn-tc # Heat to add
   TT<-cumsum((ph/gt[1:m])*(z-c(0,z[1:(m-1)])))
   # Soil heat
@@ -884,7 +882,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
   tdif<-0.5*previn$soiltc[1]+0.5*tnsoil[1]-0.5*previn$tair-0.5*tair
   zdif<-abs(z-d+0.2*zm)
   sel<-which(zdif==min(zdif))[1]
-  gt2<-gcanopy(uh,d+0.2*zm,0,tn[sel],tnsoil[1],hgt,sum(vegp$PAI),vegp$x,vegp$lw,
+  gt2<-gcanopy(uh,d+0.2*zm,0,tn[sel],tnsoil[1],hgt,sum(vegp$PAI),
                vegp$cd,mean(vegp$iw),phi_m,pk)
   G<-gt2*cp[1]*(tn[sel]-tnsoil[1])
   Gmx <- abs((1-alb)*Rsw-Rlw-Lt)

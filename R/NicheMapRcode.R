@@ -656,8 +656,8 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   d<-ifelse(hgt>snowdep,zeroplanedis(hgt, PAIt),snowdep-0.003)
   zh<-0.2*zm
   hgt2<-ifelse(hgt>snowdep,hgt,snowdep)
-  a1<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
-  a2<-attencoef(hgt,0,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
+  a1<-attencoef(hgt,PAIt,vegp$cd,mean(vegp$iw))
+  a2<-attencoef(hgt,0,vegp$cd,mean(vegp$iw))
   uz1<-.windprofile(u2,hgt+2,reqhgt,a1,hgt,PAIt)
   uz2<-.windprofile(u2,snowdep+2,reqhgt,a2,0,0)
   uz<-ifelse(hgt>snowdep,uz1,uz2)
@@ -686,7 +686,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
   # Above canopy
   if (reqhgt >= hgt) {
     # Calculate conductivities
-    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*2*0.71,uh,tair,5,pk,5)
     gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
     gv<-1/(1/gC+1/gha)
@@ -718,9 +718,9 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rlw<-(1-climdata$skyem)*0.85*sb*(tz+273.15)^4
   } else {
     # Calculate conductivities
-    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
+    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gtt<-1/(1/gtt+1/gtc)
-    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw*2,vegp$cd,mean(vegp$iw),1,pk)
+    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71*2,uz,tair,5,pk,5)
     PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.6)
     gC<-layercond(PAR,vegp$gsmax,vegp$q50)
@@ -857,7 +857,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   dba$psi_m<-ifelse(dba$psi_m< -2.5,-2.5,dba$psi_m)
   dba$psi_h<-ifelse(dba$psi_h< -2.5,-2.5,dba$psi_h)
   # Wind speed at user height
-  a<-attencoef(hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw))
+  a<-attencoef(hgt,PAIt,vegp$cd,mean(vegp$iw))
   uz<-.windprofile(u2,hgt+2,reqhgt,a,hgt,PAIt)
   ln2 <- suppressWarnings(log((hgt - d) / zm))
   ln2[ln2<0.55]<-0.55
@@ -876,7 +876,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
   # Above canopy
   if (reqhgt >= hgt) {
     # Calculate conductivities
-    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gt0<-gcanopy(uh,hgt,0,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71,uh,tair,5,pk,5)
     gC<-layercond(climdata$swrad,vegp$gsmax,vegp$q50)
     gv<-1/(1/gC+1/gha)
@@ -906,9 +906,9 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     Rsw<-climdata$swrad
   } else {
     # Calculate conductivities
-    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gtc<-gcanopy(uh,hgt,reqhgt,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gtt<-1/(1/gtt+1/gtc)
-    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$x,vegp$lw,vegp$cd,mean(vegp$iw),1,pk)
+    gt0<-gcanopy(uh,reqhgt,0,tair,tair,hgt,PAIt,vegp$cd,mean(vegp$iw),1,pk)
     gha<-1.41*gforcedfree(vegp$lw*0.71,uz,tair,5,pk,5)
     PAR<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.2)
     gC<-layercond(PAR,vegp$gsmax,vegp$q50)
