@@ -9,8 +9,6 @@ windcanopy(
   z,
   hgt,
   PAI = 3,
-  x = 1,
-  lw = 0.05,
   cd = 0.2,
   iw = 0.5,
   phi_m = 1,
@@ -27,10 +25,6 @@ windcanopy(
 \item{hgt}{height to top of canopy layer (m)}
 
 \item{PAI}{Plant Area Index of canopy layer (m / m)}
-
-\item{x}{the ratio of vertical to horizontal projections of leaf foliage}
-
-\item{lw}{mean leaf width (m)}
 
 \item{cd}{drag coefficient}
 
@@ -73,7 +67,7 @@ plot(z~PAI, type = "l")
 cPAI <- cumsum(PAI)
 # ==== Calculate wind speed at top of canopy
 uref <- 2
-a <- microctools::attencoef(hgt, 3, 1)
+a <- microctools::attencoef(hgt, 3)
 uh <- windprofile(uref, hgt + 2, hgt, a, 3, hgt)
 # === Calculate canopy profile (near edge)
 uz1 <- 0
