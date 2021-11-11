@@ -786,6 +786,9 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
 #' @return `RHloc` Relative humidity (percentage) at height `reqhgt`
 #' @return `RSWloc` Total incoming shortwave radiation at height `reghgt` (W/m^2)
 #' @return `RLWloc` Total downward longwave radiation at height `reqhgt` (W/m^2)
+#' @return `windspeed` wind speed at height `reqhgt` (m/s)
+#' @return `dp` fraction of Rswloc that is diffuse radiation
+#'
 #' @import microctools
 #' @export
 #'
@@ -996,7 +999,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
 #' @param rainmult Rain multiplier for surface soil moisture (used to induce runon).
 #' @param SoilMoist_Init Initial volumetric soil water content at each soil node (m^3/m^3)
 #' @return a list of two objects:
-#' @return a data.frame of microclimate variables for height `reqhgt` asreturned by [runmodelS()]
+#' @return a data.frame of microclimate variables for height `reqhgt` as returned by [runmodelS()]
 #' @return a list of NicheMapR outputs as returned by [runNMR()]
 #'
 #' @import microctools

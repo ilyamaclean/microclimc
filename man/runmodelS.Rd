@@ -63,6 +63,10 @@ or below ground
 \code{RSWloc} Total incoming shortwave radiation at height \code{reghgt} (W/m^2)
 
 \code{RLWloc} Total downward longwave radiation at height \code{reqhgt} (W/m^2)
+
+\code{windspeed} wind speed at height \code{reqhgt} (m/s)
+
+\code{dp} fraction of Rswloc that is diffuse radiation
 }
 \description{
 Rapid method for calculating below or above canopy or below ground microclimate

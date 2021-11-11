@@ -76,7 +76,7 @@ canopy.}
 \value{
 a list of two objects:
 
-a data.frame of microclimate variables for height \code{reqhgt} asreturned by \code{\link[=runmodelS]{runmodelS()}}
+a data.frame of microclimate variables for height \code{reqhgt} as returned by \code{\link[=runmodelS]{runmodelS()}}
 
 a list of NicheMapR outputs as returned by \code{\link[=runNMR]{runNMR()}}
 }
