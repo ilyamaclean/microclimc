@@ -1032,11 +1032,11 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
 #' # ====================================================================== #
 #' metout<-climrun$metout
 #' nmrout<-climrun$nmrout
-#' soiltemps<-nmrout$soiltemps
+#' soiltemps<-as.data.frame(nmrout$soil)
 #' head(metout)
 #' head(soiltemps)
 #' head(nmrout$soilmoist)
-#' head(nmrout$snowtemp)
+#' head(nmrout$sunsnow)
 #' head(nmrout$plant)
 #' # ====================================================================== #
 #' # ~~~~~~~~~~~~~~~ Plot soil and air temperatures ~~~~~~~~~~~~~~~~~~~~~~~ #
