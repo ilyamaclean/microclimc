@@ -738,6 +738,13 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     rh<-Th$rh
     # Radiation
     Rsw<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=0.95)
+    # Calculate diffuse proportion
+    Rdif<-cantransdif(l=PAIu,ref=0.95)*climdata$swrad*dp
+    dp<-Rdif/Rsw
+    dp[is.na(dp)]<-1
+    dp[is.infinite(dp)]<-1
+    dp[dp<0]<-0
+    dp[dp>1]<-1
     Rlw<-canlw(tair,PAIu,0.85,climdata$skyem,vegp$clump)$lwin
   }
   if (length(sbs)>0) {
@@ -749,7 +756,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
     Rlw[sbs]<-Rlw2
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
-                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
+                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz,dp=dp)
   return(metout)
 }
 #' Run model under steady state conditions
@@ -926,10 +933,17 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     rh<-Th$rh
     # Radiation
     Rsw<-cansw(climdata$swrad,dp,tme=tme,lat=lat,long=long,x=vegp$x,l=PAIu,ref=vegp$refls)
+    # Calculate diffuse proportion
+    Rdif<-cantransdif(l=PAIu,ref=vegp$refls)*climdata$swrad*dp
+    dp<-Rdif/Rsw
+    dp[is.na(dp)]<-1
+    dp[is.infinite(dp)]<-1
+    dp[dp<0]<-0
+    dp[dp>1]<-1
     Rlw<-canlw(tair,PAIu,1-vegp$vegem,climdata$skyem,vegp$clump)$lwin
   }
   metout<-data.frame(obs_time=climdata$obs_time,Tref=climdata$temp,Tloc=tz,tleaf=tleaf,
-                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz)
+                     RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz,dp=dp)
   # Consider snow
   snow<-nmrout$snow
   if (class(snow) == "data.frame") {
@@ -946,6 +960,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
     metout$RSWloc[sel]<-mos$RSWloc[sel]
     metout$RLWloc[sel]<-mos$RLWloc[sel]
     metout$windspeed[sel]<-mos$windspeed[sel]
+    metout$dp[sel]<-mos$dp[sel]
   }
   return(metout)
 }
@@ -1098,7 +1113,7 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
   BD = rep(1.3, 19)
   DD = rep(2.65, 19)
   nmrout<-runNMR(climdata,prec,lat,long,1.95,hgt,2,PAIt,vegp$x,pLAI,
-                 vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
+                 vegp$clump,vegp$refg,LREFL,groundem,DEP,altt,slope,aspect,
                  ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
                  animal=animal)
   if (reqhgt < 0) {
@@ -1114,21 +1129,19 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tz,
                          tleaf=-999,RHref=relhum,RHloc=-999)
   } else if (reqhgt < (hgt+2)) {
-    metout <- runmodelS(climdata,vegp,soilp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,0.95)
+    metout <- runmodelS(climdata,vegp,soilp,nmrout,reqhgt,lat,long,metopen,windhgt,surfwet,groundem)
   } else {
     metout <- data.frame(obs_time=climdata$obs_time,Tref=tair,Tloc=tair,
                          tleaf=-999,RHref=relhum,RHloc=relhum)
     warning("Height out of range. Output climate identical to input")
   }
-
   climdata$temp <- metout$Tloc
   climdata$relhum <- metout$RHloc
   climdata$swrad <- metout$RSWloc
   climdata$windspeed <- metout$windspeed
-
   nmrout2<-runNMR(climdata=climdata,prec=prec,lat=lat,long=long,
                   Usrhyt=1.95,Veghyt=hgt,Refhyt=reqhgt,PAIt,vegp$x,pLAI,
-                  vegp$clump,vegp$refg,LREFL,0.95,DEP,altt,slope,aspect,
+                  vegp$clump,vegp$refg,LREFL,groundem,DEP,altt,slope,aspect,
                   ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
                   animal=animal)
 
