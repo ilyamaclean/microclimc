@@ -1147,6 +1147,8 @@ runwithNMR <- function(climdata, prec, vegp, soilp, reqhgt, lat, long, altt = 0,
                   vegp$clump,vegp$refg,LREFL,groundem,DEP,altt,slope,aspect,
                   ERR,soiltype,PE,KS,BB,BD,DD,cap,hori,maxpool,rainmult,SoilMoist_Init,
                   animal=animal)
-
-  return(list(metout = metout, nmrout = nmrout2$nmrout))
+  nmrouts<-nmrout2$nmrout
+  nmrouts$soil<-nmrout$nmrout$soil
+  nmrouts$soilmoist<-nmrout$nmrout$moist
+  return(list(metout = metout, nmrout = nmrouts))
 }
