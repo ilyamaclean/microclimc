@@ -1,10 +1,10 @@
 ---
-title: "Running microclim c"
+title: "Running microclimc"
 author: "Ilya Maclean, David Klinges"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Running microclimc}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---

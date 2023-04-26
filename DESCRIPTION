@@ -18,7 +18,7 @@ Description: The functions in the microclimc package contain tools for
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.1.2
 Roxygen: list(markdown = TRUE)
 Remotes: ilyamaclean/microctools,
     mrke/NicheMapR

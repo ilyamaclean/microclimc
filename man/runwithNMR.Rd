@@ -76,7 +76,7 @@ canopy.}
 \value{
 a list of two objects:
 
-a data.frame of microclimate variables for height \code{reqhgt} asreturned by \code{\link[=runmodelS]{runmodelS()}}
+a data.frame of microclimate variables for height \code{reqhgt} as returned by \code{\link[=runmodelS]{runmodelS()}}
 
 a list of NicheMapR outputs as returned by \code{\link[=runNMR]{runNMR()}}
 }
@@ -112,11 +112,11 @@ climrun <- runwithNMR(weather,dailyprecip,vegp,soilp,1,50.2178,-5.32656)
 # ====================================================================== #
 metout<-climrun$metout
 nmrout<-climrun$nmrout
-soiltemps<-nmrout$soiltemps
+soiltemps<-as.data.frame(nmrout$soil)
 head(metout)
 head(soiltemps)
 head(nmrout$soilmoist)
-head(nmrout$snowtemp)
+head(nmrout$sunsnow)
 head(nmrout$plant)
 # ====================================================================== #
 # ~~~~~~~~~~~~~~~ Plot soil and air temperatures ~~~~~~~~~~~~~~~~~~~~~~~ #
