@@ -904,8 +904,8 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 .vegpsort <- function(vegp, i) {
   PAI<-vegp$PAI
   pLAI<-vegp$pLAI
-  if (class(vegp$PAI) == "matrix") PAI <- as.vector(vegp$PAI[,i])
-  if (class(vegp$pLAI) == "matrix") pLAI <- as.vector(vegp$pLAI[,i])
+  if (class(vegp$PAI)[1] == "matrix") PAI <- as.vector(vegp$PAI[,i])
+  if (class(vegp$pLAI)[1] == "matrix") pLAI <- as.vector(vegp$pLAI[,i])
   if (length(vegp$zm0) > 1) {
     zm0 <- vegp$zm0[i]
   } else zm0<-vegp$zm0[1]
@@ -917,7 +917,7 @@ runonestep <- function(climvars, previn, vegp, soilp, timestep, tme, lat, long, 
 #' internal function to sort out vegetation parameters for snow
 .snowsort<-function(vegp, snow, i) {
   vegp2 <- vegp
-  if (class(snow) != "logical") {
+  if (class(snow)[1] != "logical") {
     if (snow[i] == 1) {
       vegp2$lw<-vegp2$lw*1.5
       vegp2$zm0<-0.024
@@ -1133,7 +1133,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
     soilp$z[sel]<- -reqhgt
     if (dif[sel]<0 & sel != length(soilp$z)) soilp$z[sel+1]<-soilp$z[sel+1]-dif[sel]
   }
-  if (class(reqhgt) == "character") {
+  if (class(reqhgt)[1] == "character") {
     if (reqhgt != "all" & reqhgt != "allclim") {
       stop("input reqhgt no recognised\n")
     } else  spinhgt <- vegp$hgt / 2
@@ -1143,7 +1143,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
   }
   tme<-as.POSIXlt(climdata$obs_time, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   # Sort out soil moisture
-  if (class(theta)!="matrix") {
+  if (class(theta)[1] !="matrix") {
     if (length(theta) == 1) {
       theta<-rep(theta,length(tme))
       theta<-matrix(theta,nrow=1)
@@ -1152,7 +1152,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
       theta<-matrix(rep(theta,length(tme)),ncol=length(tme))
     }
   }
-  if (class(previn) == "logical") {
+  if (class(previn)[1] == "logical") {
     vegp2<-.snowsort(vegp,snow,1)
     previn <- spinup(climdata,vegp2,soilp,lat,long,edgedist,spinhgt,sdepth,zu,
                      theta[,1],theta[,1],merid,dst,n,plotout,steps,metopen,windhgt)
@@ -1173,7 +1173,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
   G <- 0
   Rswin <- 0
   Rlwin <- 0
-  if (class(reqhgt) == "character") {
+  if (class(reqhgt)[1] == "character") {
     tcout<-matrix(NA,nrow=length(tme),ncol=length(previn$tc))
     soiltcout<-matrix(NA,nrow=length(tme),ncol=length(previn$soiltc))
     tleafout<-matrix(NA,nrow=length(tme),ncol=length(previn$tleaf))
@@ -1202,7 +1202,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
                          edgedist,sdepth,reqhgt2,zu,theta[,i],thetap,merid,dst,n,metopen,windhgt,
                          zlafact, surfwet)
     if (i%%plotsteps == 0 & plotout) plotresults(previn, vegp, climvars, i)
-    if (class(reqhgt) == "character") {
+    if (class(reqhgt)[1] == "character") {
       tcout[i,]<-previn$tc
       soiltcout[i,]<-previn$soiltc
       tleafout[i,]<-previn$tleaf
@@ -1264,7 +1264,7 @@ runmodel <- function(climdata, vegp, soilp, lat, long, edgedist = 100, reqhgt = 
     H[i] <- previn$H
     G[i] <- previn$G
   }
-  if (class(reqhgt) == "character") {
+  if (class(reqhgt)[1] == "character") {
     # Air temp
     nms <- c("obs_time",paste0("Temp_",round(previn$z,3),"m"),
              paste0("Temp_",round(previn$zabove,3),"m"),"psi_m")
