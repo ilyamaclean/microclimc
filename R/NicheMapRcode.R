@@ -186,7 +186,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
                 SLOPE, ASPECT, ALTT, CMH2O = 1, microdaily = 1, tannul, EC, VIEWF,
                 snowtemp = 1.5, snowdens = 0.375, snowmelt = 0.9, undercatch = 1,
                 rainmult, runshade = 1, runmoist = 1, maxpool, evenrain = 1, snowmodel,
-                rainmelt =  0.0125, writecsv = 0, densfun, hourly = 0, rainhourly = 0,
+                rainmelt =  0.0125, writecsv = 0, densfun, hourly = 1, rainhourly = 0,
                 lamb = 0, IUV = 0, RW = 2.5e+10, PC = -1500, RL = 2e+6, SP = 10, R1 =  0.001,
                 IM = 1e-06, MAXCOUNT = 500, IR = 0, message = 0, fail = 8760, snowcond = 0,
                 intercept, grasshade, solonly = 0, ZH, D0, TIMAXS, TIMINS, spinup,0,360)
