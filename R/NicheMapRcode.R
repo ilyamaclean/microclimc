@@ -164,7 +164,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (length(PAI) != ndays) stop("PAI must be a single value or hourly/daily \n")
   PAIc<-PAI^(1/(1-clump))
   MINSHADES<-(exp(-PAI)+clump)*100
-  MINSHADES<-0
   MAXSHADES<-rep(100,ndays)
   # Modal times of air temp, wind, humidity and cloud cover
   TIMINS <- c(0, 0, 1, 1)
