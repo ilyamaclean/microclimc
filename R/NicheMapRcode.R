@@ -69,7 +69,6 @@
 #' @examples
 #' # Run NicheMapR with default parameters and inbuilt weather datasets
 #' library(NicheMapR)
-#' microout<-runNMR(weather, dailyprecip, 50.2178, -5.32656, 0.05, 0.02, PAI = 1)
 #' # Plot air temperatures
 #' metout <- microout$metout
 #' tmn <- min(metout$TALOC,metout$TAREF)
@@ -95,136 +94,138 @@
 runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 3, LOR = 1,
                    pLAI = 0.8, clump = 0, REFL = 0.15, LREFL = 0.4, SLE = 0.95,
                    DEP = c(0,2.5,5,10,15,20,30,50,100,200), ALTT = 0, SLOPE = 0, ASPECT = 0,
-                   ERR = 1.5, soiltype = "Loam", PE=rep(1.1,19), KS=rep(0.0037,19), BB=rep(4.5,19),
-                   BD=rep(1.3,19), DD=rep(2.65,19), cap = 1, hori = rep(0,36), maxpool = 1000,
-                   rainmult = 1, SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
+                   ERR = 1.5, soiltype = "Loam", PE = NA, KS = NA, BB = NA, BD = NA, DD = NA,
+                   cap = 1, hori = rep(0,36), maxpool = 1000, rainmult = 1,
+                   SoilMoist_Init = c(0.1,0.12,0.15,0.2,0.25,0.3,0.3,0.3,0.3,0.3),
                    animal = FALSE) {
-  if (Veghyt > 2) Veghyt<-2
-  loc<-c(long,lat)
-  tmehr<-as.POSIXlt(climdata$obs_time,tz="UTC")
-  nyears<-length(unique(tmehr$year))
-  fail<-nyears*24*365
-  ystart<-tmehr$year[1]+1900
-  yfinish<-tmehr$year[length(tmehr)]+1900
-  yearlist<-seq(ystart,(ystart+(nyears-1)),1)
-  doy <- unique(as.numeric(strftime(tmehr, format = "%j")))
-  ndays <- unique(paste(as.numeric(strftime(tmehr, format = "%j")),
-                        as.numeric(strftime(tmehr, format = "%y"))))
-  ndays <- length(ndays)
-  doynum<-ndays
-  ida<-ndays
-  microdaily<-1
-  daystart<-1
-  # Set root properties
-  L<-c(0,0,8.2,8,7.8,7.4,7.1,6.4,5.8,4.8,4,1.8,0.9,0.6,0.8,0.4,0.4,0,0)*10000
-  R1<-0.001
-  RW<-2.5e+10
-  RL<-2e+06
-  PC<- -1500
-  SP<-10
-  IM<-1e-06
-  # Set snow properties
-  snowtemp<-1.5
-  snowdens<-0.375
-  densfun<-c(0.5979,0.2178,0.001,0.0038)
-  snowmelt<-1
-  undercatch<-1
-  rainmelt<-0.0125
-  grasshade<-ifelse(Veghyt<0.5,1,0) #VT
-  ### LAI etc
-  if (length(PAI)==1) {
+  # Internal functions
+  .zeroplanedis<-function(h,pai) {
+    pai[pai<0.001]<-0.001
+    d<-(1-(1-exp(-sqrt(7.5*pai)))/sqrt(7.5*pai))*h
+    d
+  }
+  #' Calculate roughness length
+  .roughlength<-function(h,pai,d) {
+    Be<-sqrt(0.003+(0.2*pai)/2)
+    zm<-(h-d)*exp(-0.4/Be)
+    zm
+  }
+  # Hourly to daily
+  .dmaxmin <- function(x, fun) {
+    dx <- t(matrix(x, nrow = 24))
+    apply(dx, 1, fun)
+  }
+  # Get soil parameters
+  .getsoilparams<-function(soiltype) {
+    # Get soil parameters based on soil type
+    sel<-which(soilparams$Soil.type==soiltype)
+    BulkDensity<-soilparams$rho[sel]
+    SatWater <- soilparams$Smax[sel] # volumetric water content at saturation (0.1 bar matric potential) (m3/m3)
+    Clay <- CampNormTbl9_1$Clay[sel]*100 # clay con
+    KS<-rep(CampNormTbl9_1$Ks[sel],19)
+    BB<-rep(CampNormTbl9_1$b[sel],19)
+    PE<-rep(CampNormTbl9_1$airentry[sel],19)
+    return(list(BulkDensity=BulkDensity,SatWater=SatWater,Clay=Clay,KS=KS,BB=BB))
+  }
+  # Time and location parameters
+  ndays<-length(climdata$temp)/24
+  doy <- c(15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349) # middle day of each month
+  idayst <- 1 # start day (legacy parameter)
+  ida <- ndays # end day (legacy parameter)
+  HEMIS <- ifelse(lat < 0, 2, 1)
+  ALAT<-abs(trunc(lat))
+  AMINUT<-(abs(lat)-ALAT)*60
+  ALONG<- abs(trunc(long))
+  ALMINT<-(abs(long)-ALONG)*60
+  ALREF<-0
+  EC <- 0.0167238
+  # Air and wind vertical profile parameters
+  D0<-.zeroplanedis(Veghyt,mean(PAI))
+  RUF<-.roughlength(Veghyt,mean(PAI),D0)
+  D0<-0
+  ZH<-0.2*RUF
+  # Terrain and shading parameters
+  VIEWF<-1-sum(sin(hori*pi/180))/length(hori)
+  # Soil properties
+  Numtyps <- 2 # number of soil types
+  Nodes <- matrix(data = 0, nrow = 10, ncol = ndays) # array of all possible soil nodes
+  Nodes[1,1:ndays] <- 3 # deepest node for first substrate type
+  Nodes[2,1:ndays] <- 9 # deepest node for second substrate type
+  # Time varying environmental data
+  tannul <- mean(climdata$temp)
+  # Shade parameter
+  grasshade<-ifelse(Veghyt<0.5,1,0) # VT
+  if (length(PAI) == 1) {
     PAI<-rep(PAI,ndays)
-  } else if (length(PAI)==ndays*24) {
+  } else if (length(PAI) == ndays*24) {
     PAI<-matrix(PAI,ncol=24,byrow=T)
     PAI<-apply(PAI,1,mean)
   }
-  if (length(PAI) > ndays & length(PAI) < ndays*24) stop("PAI must be a single value or hourly/daily values encompassing the entire timeseries.\n It appears that the length of PAI is greater than ndays but less than hourly (24 * ndays). If hourly, PAI must represent every hour of the timeseries. \n")
-  if (length(PAI) > 1 & length(PAI) < ndays) stop("PAI must be a single value or hourly/daily values encompassing the entire timeseries.\n It appears that the length of PAI is greater than 1 but less than ndays. If daily, PAI must represent every day of the timeseries.\n")
+  if (length(PAI) != ndays) stop("PAI must be a single value or hourly/daily \n")
+  PAIc<-PAI^(1/(1-clump))
+  MINSHADES<-(exp(-PAI)+clump)*100
+  MINSHADES<-0
   MAXSHADES<-rep(100,ndays)
-  # Work out canopy shading
-  diftr<-cantransdif(PAI,LREFL,clump)
-  lt<-tmehr$hour+tmehr$min/60+tmehr$sec/3600
-  jd<-jday(tme=tmehr)
-  sa<-solalt(lt,lat,long,jd,0)
-  dirtr<-cantransdir(PAI,LOR,sa,LREFL,clump)
-  si<-solarcoef(SLOPE,ASPECT,lt,lat,long,jd,merid=0)
-  rad_dir<-climdata$swrad-climdata$difrad
-  rad_ground<-si*dirtr*rad_dir+climdata$difrad*diftr
-  MINSHADES<-(1-rad_ground/climdata$swrad)*100
-  MINSHADES[MINSHADES>99.9]<-99.9
-  MINSHADES[MINSHADES<0]<-0
-  MINSHADES[is.na(MINSHADES)]<-mean(MINSHADES,na.rm=T)
-  MINSHADES<-matrix(MINSHADES,ncol=24,byrow=T)
-  MINSHADES<-apply(MINSHADES,1,mean)
-  intercept<-mean(MINSHADES)/100*0.3 # snow interception
-  x<-t(as.matrix(as.numeric(c(loc[1],loc[2]))))
-  ALREF<-abs(trunc(x[1]))
-  HEMIS<-ifelse(x[2]<0,2,1)
-  ALAT<-abs(trunc(x[2]))
-  AMINUT<-(abs(x[2])-ALAT)*60
-  ALONG<- abs(trunc(x[1]))
-  ALMINT<-(abs(x[1])-ALONG)*60
-  azmuth<-ASPECT
-  lat<-as.numeric(loc[2])
-  long<-as.numeric(loc[1])
-  Density<-2.56
-  Thcond<-2.5
-  SpecHeat<-870
-  if (is.na(soiltype) == FALSE) {
-    sel<-which(microclimc::soilparams$Soil.type == soiltype)
-    if (length(sel) == 0) stop("Erroneous soil type specified")
-    PE<-rep(microclimc::soilparams$psi_e[sel],19)
-    BB<-rep(microclimc::soilparams$b[sel],19)
-    BD<-rep(microclimc::soilparams$rho[sel],19)
-    KS<-rep(CampNormTbl9_1$Ks[sel],19)
-  }
-  BulkDensity<-BD[seq(1,19,2)]
-  VIEWF<-1-sum(sin(as.data.frame(hori)*pi/180))/length(hori)
-  #########################
-  lt<-tmehr$hour+tmehr$min/60+tmehr$sec/3600
-  jd<-jday(tme=tmehr)
-  sa<-solalt(lt,lat,long,jd,0)
-  ZENhr<-90-sa
-  ZENhr[ZENhr>90]<-90
+  # Modal times of air temp, wind, humidity and cloud cover
+  TIMINS <- c(0, 0, 1, 1)
+  TIMAXS <- c(1, 1, 0, 0)
+  # Spinup
+  soilinit <- rep(tannul, 20)
+  spinup <- 1
+  # Decide whether to run snow model
+  if (length(prec) == ndays) {
+    RAINhr<-rep(prec/24,each=24)
+  } else RAINhr<-prec
+  snowmodel<-max(ifelse(climdata$temp<0,1,0)*ifelse(RAINhr>0,0,1))
+  densfun <- c(0.5979, 0.2178, 0.001, 0.0038)
+  intercept <- mean(MINSHADES) / 100 * 0.3
+  # Decide whether to run snowmodel
+  microinput<-c(ndays, RUF, ERR, Usrhyt, Refhyt, Numtyps, Z01 = 0, Z02 = 0, ZH1 = 0,
+                ZH2 = 0, idayst = 1, ida, HEMIS, ALAT, AMINUT, ALONG, ALMINT, ALREF,
+                SLOPE, ASPECT, ALTT, CMH2O = 1, microdaily = 1, tannul, EC, VIEWF,
+                snowtemp = 1.5, snowdens = 0.375, snowmelt = 0.9, undercatch = 1,
+                rainmult, runshade = 1, runmoist = 1, maxpool, evenrain = 1, snowmodel,
+                rainmelt =  0.0125, writecsv = 0, densfun, hourly = 0, rainhourly = 0,
+                lamb = 0, IUV = 0, RW = 2.5e+10, PC = -1500, RL = 2e+6, SP = 10, R1 =  0.001,
+                IM = 1e-06, MAXCOUNT = 500, IR = 0, message = 0, fail = 8760, snowcond = 0,
+                intercept, grasshade, solonly = 0, ZH, D0, TIMAXS, TIMINS, spinup,0,360)
+  tides <- matrix(data = 0, nrow = 24*ndays, ncol = 3)
+  SLES <- rep(SLE, ndays)
+  # Weather variables
   TAIRhr<-climdata$temp
-  SOLRhr<-climdata$swrad*VIEWF
-  sb<-5.67*10^-8
-  IRDhr<-climdata$skyem*sb*(climdata$temp+273.15)^4
   RHhr<-climdata$relhum
-  RHhr[RHhr>100]<-100
-  RHhr[RHhr<0]<-0
-  e0<-satvap(TAIRhr)
-  ea<-e0*(RHhr/100)
+  WNhr<-climdata$windspeed
+  PRESShr<-climdata$pres*1000
+  ea<-satvap(TAIRhr)*(RHhr/100)
   eo<-1.24*(10*ea/(TAIRhr+273.15))^(1/7)
   CLDhr<-((climdata$skyem-eo)/(1-eo))*100
   CLDhr[CLDhr<0]<-0
   CLDhr[CLDhr>100]<-100
-  WNhr<-climdata$windspeed
-  WNhr[is.na(WNhr)]<-0.1
-  PRESShr<-climdata$pres*1000
-  RAINFALL<-prec
-  RAINFALL[RAINFALL<0.1]<-0
-  ZENhr2<-ZENhr
-  ZENhr2[ZENhr2!=90]<-0
-  dmaxmin<-function(x,fun) {
-    dx <- t(matrix(x, nrow = 24))
-    apply(dx, 1, fun)
-  }
-  TMAXX<-dmaxmin(TAIRhr,max)
-  TMINN<-dmaxmin(TAIRhr,min)
-  CCMAXX<-dmaxmin(CLDhr,max)
-  CCMINN<-dmaxmin(CLDhr,min)
-  RHMAXX<-dmaxmin(RHhr,max)
-  RHMINN<-dmaxmin(RHhr,min)
-  WNMAXX<-dmaxmin(WNhr,max)
-  WNMINN<-dmaxmin(WNhr,min)
-  PRESS<-dmaxmin(PRESShr,min)
-  ###
-  slope <- 0
-  azmuth <- 0
-  relhum <- 1
-  optdep.summer<-as.data.frame(rungads(loc[2],loc[1],relhum, 0))
-  optdep.winter<-as.data.frame(rungads(loc[2],loc[1],relhum, 1))
+  TMAXX<-.dmaxmin(TAIRhr,max)
+  TMINN<-.dmaxmin(TAIRhr,min)
+  CCMAXX<-.dmaxmin(CLDhr,max)
+  CCMINN<-.dmaxmin(CLDhr,min)
+  RHMAXX<-.dmaxmin(RHhr,max)
+  RHMINN<-.dmaxmin(RHhr,min)
+  WNMAXX<-.dmaxmin(WNhr,max)
+  WNMINN<-.dmaxmin(WNhr,min)
+  PRESS<-.dmaxmin(PRESShr,min)
+  SOLRhr<-climdata$swrad*VIEWF
+  sb<-5.67*10^-8
+  IRDhr<-climdata$skyem*sb*(climdata$temp+273.15)^4
+  tme<-as.POSIXlt(climdata$obs_time,tz="UTC")
+  lt<-tme$hour+tme$min/60+tme$sec/3600
+  jd<-jday(tme=tme)
+  sa<-solalt(lt,lat,long,jd,0)
+  ZENhr<-90-sa
+  ZENhr[ZENhr>90]<-90
+  REFLS <- rep(REFL, ndays) # set up vector of soil reflectances for each day
+  # Soil surface wetness
+  RAIND<-.dmaxmin(RAINhr,max)
+  PCTWET<-ifelse(RAIND>0,90,0)
+  # Aerosol extinction coefficient profile
+  optdep.summer<-as.data.frame(rungads(lat,long,1,0))
+  optdep.winter<-as.data.frame(rungads(lat,long,1,0))
   optdep<-cbind(optdep.winter[,1],rowMeans(cbind(optdep.summer[,2],optdep.winter[,2])))
   optdep<-as.data.frame(optdep)
   colnames(optdep)<-c("LAMBDA","OPTDEPTH")
@@ -237,130 +238,59 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
             2150,2200,2260,2300,2320,2350,2380,2400,2420,2450,2490,2500,2600,2700,2800,
             2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000)
   TAI<-predict(a,data.frame(LAMBDA))
-  RAINFALL<-RAINFALL
-  ALLMINTEMPS<-TMINN
-  ALLMAXTEMPS<-TMAXX
-  ALLTEMPS<-cbind(ALLMAXTEMPS,ALLMINTEMPS)
-  WNMAXX<-WNMAXX
-  WNMINN<-WNMINN
-  WNhr<-WNhr
-  REFLS<-rep(REFL,ndays)
-  PCTWET <-rep(0,ndays)
-  soilwet<-RAINFALL
-  soilwet[soilwet<=1.5]<-0
-  soilwet[soilwet>0]<-90
-  if (ndays < 1) PCTWET<-pmax(soilwet,PCTWET)
-  Intrvls<-rep(0,ndays)
-  Intrvls[1]<-1
-  Numtyps<-10
-  Nodes<-matrix(data=0,nrow=10,ncol=ndays)
-  Nodes[1:10,]<-c(1:10)
-  ALREF<-abs(trunc(x[1]))
-  HEMIS<-ifelse(x[2]<0,2,1)
-  ALAT<-abs(trunc(x[2]))
-  AMINUT<-(abs(x[2])-ALAT)*60
-  ALONG<-abs(trunc(x[1]))
-  ALMINT<-(abs(x[1])-ALONG)*60
-  avetemp<-(sum(TMAXX)+sum(TMINN))/(length(TMAXX)*2)
-  soilinit<-rep(avetemp,20)
-  tannul<-mean(unlist(ALLTEMPS))
-  deepsoil<-rep(mean(TAIRhr),ndays)
-  SLES<-matrix(nrow=ndays,data=0)
-  SLES<-SLES+SLE
-  moists2<-matrix(nrow=10,ncol=ndays,data=0)
-  moists2[1:10,]<-SoilMoist_Init
-  moists<-moists2
-  soilprops<-matrix(data=0,nrow=10,ncol=5)
-  soilprops[,1]<-BulkDensity
-  soilprops[,2]<-min(0.26,1-BulkDensity/Density)
-  soilprops[,3]<-Thcond
-  soilprops[,4]<-SpecHeat
-  soilprops[,5]<-Density
-  if (cap==1) {
-    soilprops[1:2,3] <- 0.2
-    soilprops[1:2,4] <- 1920
+  # Soil properties (mineral component only)
+  Thcond <- 2.5 # soil minerals thermal conductivity (W/mC)
+  SpecHeat <- 870 # soil minerals specific heat (J/kg-K)
+  if (class(DD) == "logical") {
+    Density<-2.560 # soil minerals density (Mg/m3)
+  } else Density<-mean(DD)
+  SP<-.getsoilparams(soiltype)
+  if (class(BD) == "logical") {
+    BulkDensity <- SP$BulkDensity # soil bulk density (kg/m3)
+  } else BulkDensity<-mean(BD)
+  SatWater<-SP$SatWater # volumetric water content at saturation (0.1 bar matric potential) (m3/m3)
+  Clay <- SP$Clay # clay content for matric potential calculations (%)
+  # Create matrix of soil properties
+  soilprops <- matrix(data = 0, nrow = 10, ncol = 6) # create an empty soil properties matrix
+  soilprops[1:2,1] <- BulkDensity # insert soil bulk density to profile 1
+  soilprops[1:2,2] <- SatWater # insert saturated water content to profile 1
+  soilprops[1:2,3] <- Thcond # insert thermal conductivity to profile 1
+  soilprops[1:2,4] <- SpecHeat # insert specific heat to profile 1
+  soilprops[1:2,5] <- Density # insert mineral density to profile 1
+  if(cap == 1) { # insert thermal conductivity to profile 1, and see if 'organic cap' added on top
+    soilprops[1,3]<-0.2 # mineral thermal conductivity
+    soilprops[1,4]<-1920
   }
-  hourly<-1
-  if (length(prec) == length(TAIRhr)) {
-    rainhourly<-1
-    RAINhr<-prec
-    RAINhr[RAINhr<0.1]<-0
-    raintest<-RAINhr
-  } else if (length(prec) == length(TAIRhr)/24) {
-    rainhourly<-0
-    RAINhr<-rep(prec/24,each=24)
-  } else stop("Rainfall must be daily or hourly")
-  # Decide whether to run snowmodel
-  snowtest<-ifelse(TAIRhr>0,0,-TAIRhr)*RAINhr
-  snowmodel <- 0
-  if (max(snowtest)>0) snowmodel<-1
-  RUF<-roughlength(Veghyt,mean(PAI),0.0003)
-  D0<-zeroplanedis(Veghyt, mean(PAI))
-  if (animal == FALSE){
-    microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
-                  HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
-                  microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
-                  rainmult,runshade=0,1,maxpool,0,snowmodel,rainmelt,
-                  0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
-                  500,0,0,fail,0,intercept,grasshade,0,0,D0)
+  soilinit <- rep(tannul,20) # make inital soil temps equal to mean annual
+  if (class(PE) == "logical") PE<-SP$PE
+  if (class(KS) == "logical") KS<-SP$KS
+  if (class(BB) == "logical") BB<-SP$BB
+  if (class(BD) == "logical") BD<-SP$BD
+  if (class(DD) == "logical") DD<-SP$DD
+  # Initial soil moistures
+  moists <- matrix(nrow=10, ncol = ndays, data = 0) # set up an empty vector for soil moisture values through time
+  moists[1:10,] <- SoilMoist_Init # insert inital soil moisture
+  # Calculate monthly mean rainfall
+  RAINFALL<-0
+  for (mth in 1:12) {
+    sel<-which(tme$mon+1 == mth)
+    RAINFALL[mth]<-sum(RAINhr[sel])
   }
-  if (animal == TRUE){
-    # run shade (runshade=1)
-    microinput<-c(ndays,RUF,ERR,Usrhyt,Refhyt,Numtyps,0,0,0,0,1,ida,
-                  HEMIS,ALAT,AMINUT,ALONG,ALMINT,ALREF,slope,azmuth,ALTT,1,
-                  microdaily,tannul,0.0167238,VIEWF,snowtemp,snowdens,snowmelt,undercatch,
-                  rainmult,runshade=1,1,maxpool,0,snowmodel,rainmelt,
-                  0,densfun,hourly,rainhourly,0,0,RW,PC,RL,SP,R1,IM,
-                  500,0,0,fail,0,intercept,grasshade,0,0,D0)
-  }
-  doy1<-matrix(data=0,nrow=ndays,ncol=1)
-  SLES1<-matrix(data=0,nrow=ndays,ncol=1)
-  MAXSHADES1<-matrix(data=0,nrow=ndays,ncol=1)
-  MINSHADES1<-matrix(data=0,nrow=ndays,ncol=1)
-  TMAXX1<-matrix(data=0,nrow=ndays,ncol=1)
-  TMINN1<-matrix(data=0,nrow=ndays,ncol=1)
-  CCMAXX1<-matrix(data=0,nrow=ndays,ncol=1)
-  CCMINN1<-matrix(data=0,nrow=ndays,ncol=1)
-  RHMAXX1<-matrix(data=0,nrow=ndays,ncol=1)
-  RHMINN1<-matrix(data=0,nrow=ndays,ncol=1)
-  WNMAXX1<-matrix(data=0,nrow=ndays,ncol=1)
-  WNMINN1<-matrix(data=0,nrow=ndays,ncol=1)
-  REFLS1<-matrix(data= 0,nrow=ndays,ncol=1)
-  PCTWET1<-matrix(data=0,nrow=ndays, ncol=1)
-  RAINFALL1<-matrix(data=0,nrow=ndays,ncol=1)
-  tannul1<-matrix(data=0,nrow=ndays,ncol=1)
-  moists1<-matrix(data=0,nrow=10,ncol=ndays)
-  SLES1[1:ndays]<-SLES
-  MAXSHADES1[1:ndays]<-MAXSHADES
-  MINSHADES1[1:ndays]<-MINSHADES
-  TMAXX1[1:ndays]<-TMAXX
-  TMINN1[1:ndays]<-TMINN
-  CCMAXX1[1:ndays]<-CCMAXX
-  CCMINN1[1:ndays]<-CCMINN
-  RHMAXX1[1:ndays]<-RHMAXX
-  RHMINN1[1:ndays]<-RHMINN
-  WNMAXX1[1:ndays]<-WNMAXX
-  WNMINN1[1:ndays]<-WNMINN
-  REFLS1[1:ndays]<-REFLS
-  PCTWET1[1:ndays]<-PCTWET
-  raind<-matrix(RAINhr,ncol=24,byrow=TRUE)
-  raind<-apply(raind,1,sum)
-  RAINFALL1[1:ndays]<-raind
-  tannul1[1:ndays]<-tannul
-  moists1[1:10, 1:ndays] <- moists
-  tides<-matrix(data=0,nrow=24*ndays,ncol=3)
-  TIMAXS<-c(1,1,0,0)
-  TIMINS<-c(0,0,1,1)
+  tannulrun <- rep(tannul,ndays) # deep soil temperature (2m) (deg C)
+  # Root density at each node:
+  L<-c(0,0,8.2,8,7.8,7.4,7.1,6.4,5.8,4.8,4,1.8,0.9,0.6,0.8,0.4,0.4,0,0)*10000
   LAI<-pLAI*PAI
-  micro<-list(tides=tides,microinput=microinput,doy=doy,SLES=SLES1,DEP=DEP,Nodes=Nodes,
-              MAXSHADES=MAXSHADES,MINSHADES=MINSHADES,TIMAXS=TIMAXS,TIMINS=TIMINS,TMAXX=TMAXX1,
-              TMINN=TMINN1,RHMAXX=RHMAXX1,RHMINN=RHMINN1,CCMAXX=CCMAXX1,CCMINN=CCMINN1,
-              WNMAXX=WNMAXX1,WNMINN=WNMINN1,TAIRhr=TAIRhr,RHhr=RHhr,WNhr=WNhr,CLDhr=CLDhr,
-              SOLRhr=SOLRhr,RAINhr=RAINhr,ZENhr=ZENhr,IRDhr=IRDhr,REFLS=REFLS1,PCTWET=PCTWET1,
-              soilinit=soilinit,hori=hori,TAI=TAI,soilprops=soilprops,moists=moists1,
-              RAINFALL=RAINFALL1,tannulrun=deepsoil,PE=PE,KS=KS,BB=BB,BD=BD,DD=DD,L=L,LAI=LAI)
+  micro<-list(microinput = microinput, tides=tides, doy = doy, SLES = SLES, DEP = DEP,
+              Nodes=Nodes, MAXSHADES = MAXSHADES, MINSHADES = MINSHADES, TMAXX = TMAXX,
+              TMINN = TMINN, RHMAXX = RHMAXX, RHMINN = RHMINN, CCMAXX = CCMAXX, CCMINN = CCMINN,
+              WNMAXX = WNMAXX, WNMINN = WNMINN, TAIRhr = TAIRhr, RHhr = RHhr, WNhr = WNhr,
+              CLDhr = CLDhr, SOLRhr = SOLRhr, RAINhr = RAINhr, ZENhr = ZENhr, IRDhr = IRDhr,
+              REFLS = REFLS, PCTWET = PCTWET, soilinit = soilinit, hori  = hori,
+              TAI = TAI, soilprops = soilprops, moists = moists, RAINFALL = RAINFALL,
+              tannulrun = tannulrun, PE = PE, KS = KS, BB = BB, BD = BD, DD = DD,
+              L = L, LAI = LAI)
+  # Run model
   microut<-microclimate(micro)
-
   if(animal==FALSE){
     metout<-as.data.frame(microut$metout)
     soil<-as.data.frame(microut$soil)
@@ -373,7 +303,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
 
     return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=microut))
   }
-
   if(animal == TRUE){
     metout<-microut$metout
     shadmet<-microut$shadmet
@@ -387,25 +316,18 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
     shadpot <- microut$shadpot
     plant <- microut$plant
     shadplant <- microut$shadplant
-
     if (snowmodel == 1) {
       snow <- microut$sunsnow
       shdsnow <- microut$shdsnow
     } else snow <- 0
-
-
     drlam <- microut$drlam
     drrlam <- microut$drrlam
     srlam <- microut$srlam
-
     timeinterval = 365
-
     days <- rep(seq(1, timeinterval * nyears), 24)
     days <- days[order(days)]
     dates <- days + metout[, 2]/60/24 - 1
     dates2 <- seq(1, timeinterval * nyears)
-
-
     if (snowmodel == 1) {
       nmrout_full <- list(soil = soil, shadsoil = shadsoil,
                           metout = metout, shadmet = shadmet, soilmoist = soilmoist,
@@ -431,13 +353,11 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
                           DEP = DEP, drlam = drlam, drrlam = drrlam,
                           srlam = srlam, dates = dates, dates2 = dates2)
     }
-
     metout <- data.frame(metout)
     soil <- data.frame(soil)
     soilmoist <- data.frame(soilmoist)
     snow <- data.frame(snow)
     plant <- data.frame(plant)
-
     return(list(metout=metout,soiltemps=soil,soilmoist=soilmoist,snowtemp=snow,plant=plant,nmrout=nmrout_full))
   }
 }

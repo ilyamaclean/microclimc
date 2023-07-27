@@ -25,11 +25,11 @@ runNMR(
   ASPECT = 0,
   ERR = 1.5,
   soiltype = "Loam",
-  PE = rep(1.1, 19),
-  KS = rep(0.0037, 19),
-  BB = rep(4.5, 19),
-  BD = rep(1.3, 19),
-  DD = rep(2.65, 19),
+  PE = NA,
+  KS = NA,
+  BB = NA,
+  BD = NA,
+  DD = NA,
   cap = 1,
   hori = rep(0, 36),
   maxpool = 1000,
@@ -145,7 +145,6 @@ soil parameters are computed from soil type.  If \code{soiltype} is NA, soil par
 \examples{
 # Run NicheMapR with default parameters and inbuilt weather datasets
 library(NicheMapR)
-microout<-runNMR(weather, dailyprecip, 50.2178, -5.32656, 0.05, 0.02, PAI = 1)
 # Plot air temperatures
 metout <- microout$metout
 tmn <- min(metout$TALOC,metout$TAREF)
@@ -168,6 +167,7 @@ mmx <- max(soilm$WC2.5cm,soilm$WC30cm)
 plot(soilm$WC2.5cm~dday, type="l", col = "red", ylim=c(mmn,mmx), ylab = "Soil moisture")
 par(new = T)
 plot(soilm$WC30cm~dday, type="l", col = "blue", ylim=c(mmn,mmx), ylab = "", xlab = "")
+Calculate roughness length
 }
 \author{
 Ilya Maclean (i.m.d.maclean@exeter.ac.uk) and Urtzi Urzelai (urtzi.enriquez@gmail.com)
