@@ -518,7 +518,7 @@ tleafS <- function(tair, tground, relhum, pk, theta, gtt, gt0, gha, gv, gL, Rabs
 .runmodelsnow <- function(climdata, vegp, soilp, nmrout, reqhgt, lat, long, metopen = TRUE, windhgt = 2) {
   # Snow
   snow<-nmrout$snow
-  if (class(snow) == "data.frame") {
+  if (class(snow)[1] == "data.frame") {
     snowtemp<-snow$SN1
   } else snowtemp<-rep(0,length(L))
   metout<-nmrout$metout
@@ -869,7 +869,7 @@ runmodelS <- function(climdata, vegp, soilp, nmrout, reqhgt,  lat, long, metopen
                      RHref=relhum,RHloc=rh,RSWloc=Rsw,RLWloc=Rlw,windspeed=uz,dp=dp)
   # Consider snow
   snow<-nmrout$snow
-  if (class(snow) == "data.frame") {
+  if (class(snow)[1] == "data.frame") {
     snowtemp<-nmrout$SN1
   } else snowtemp<-rep(0,length(tz))
   mo<-nmrout$metout
