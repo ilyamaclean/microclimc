@@ -126,11 +126,12 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
     KS<-rep(CampNormTbl9_1$Ks[sel],19)
     BB<-rep(CampNormTbl9_1$b[sel],19)
     PE<-rep(CampNormTbl9_1$airentry[sel],19)
-    return(list(BulkDensity=BulkDensity,SatWater=SatWater,Clay=Clay,KS=KS,BB=BB))
+    return(list(BulkDensity=BulkDensity,SatWater=SatWater,Clay=Clay,KS=KS,BB=BB,PE=PE))
   }
   # Time and location parameters
   ndays<-length(climdata$temp)/24
-  doy <- c(15, 46, 74, 105, 135, 166, 196, 227, 258, 288, 319, 349) # middle day of each month
+  tme<-as.POSIXlt(climdata$obs_time,tz="UTC")
+  doy<-.dmaxmin(tme$yday+1,mean)
   idayst <- 1 # start day (legacy parameter)
   ida <- ndays # end day (legacy parameter)
   HEMIS <- ifelse(lat < 0, 2, 1)
@@ -164,7 +165,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   }
   if (length(PAI) != ndays) stop("PAI must be a single value or hourly/daily \n")
   PAIc<-PAI^(1/(1-clump))
-  MINSHADES<-(exp(-PAI)+clump)*100
+  MINSHADES<-((1-exp(-PAIc))+clump)*100
   MAXSHADES<-rep(100,ndays)
   # Modal times of air temp, wind, humidity and cloud cover
   TIMINS <- c(0, 0, 1, 1)
@@ -213,7 +214,6 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   SOLRhr<-climdata$swrad*VIEWF
   sb<-5.67*10^-8
   IRDhr<-climdata$skyem*sb*(climdata$temp+273.15)^4
-  tme<-as.POSIXlt(climdata$obs_time,tz="UTC")
   lt<-tme$hour+tme$min/60+tme$sec/3600
   jd<-jday(tme=tme)
   sa<-solalt(lt,lat,long,jd,0)
@@ -237,7 +237,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
             1620,1640,1660,1700,1720,1780,1800,1860,1900,1950,2000,2020,2050,2100,2120,
             2150,2200,2260,2300,2320,2350,2380,2400,2420,2450,2490,2500,2600,2700,2800,
             2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000)
-  TAI<-predict(a,data.frame(LAMBDA))
+  TAI<-predict(a,data.frame(LAMBDA))*0.1
   # Soil properties (mineral component only)
   Thcond <- 2.5 # soil minerals thermal conductivity (W/mC)
   SpecHeat <- 870 # soil minerals specific heat (J/kg-K)
@@ -265,17 +265,13 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
   if (class(PE) == "logical") PE<-SP$PE
   if (class(KS) == "logical") KS<-SP$KS
   if (class(BB) == "logical") BB<-SP$BB
-  if (class(BD) == "logical") BD<-SP$BD
-  if (class(DD) == "logical") DD<-SP$DD
+  if (class(BD) == "logical") BD<-rep(BulkDensity,19)
+  if (class(DD) == "logical") DD<-rep(Density,19)
   # Initial soil moistures
   moists <- matrix(nrow=10, ncol = ndays, data = 0) # set up an empty vector for soil moisture values through time
   moists[1:10,] <- SoilMoist_Init # insert inital soil moisture
   # Calculate monthly mean rainfall
-  RAINFALL<-0
-  for (mth in 1:12) {
-    sel<-which(tme$mon+1 == mth)
-    RAINFALL[mth]<-sum(RAINhr[sel])
-  }
+  RAINFALL<-.dmaxmin(RAINhr, sum)
   tannulrun <- rep(tannul,ndays) # deep soil temperature (2m) (deg C)
   # Root density at each node:
   L<-c(0,0,8.2,8,7.8,7.4,7.1,6.4,5.8,4.8,4,1.8,0.9,0.6,0.8,0.4,0.4,0,0)*10000
