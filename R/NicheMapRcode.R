@@ -237,7 +237,7 @@ runNMR <- function(climdata, prec, lat, long, Usrhyt, Veghyt, Refhyt = 2, PAI = 
             1620,1640,1660,1700,1720,1780,1800,1860,1900,1950,2000,2020,2050,2100,2120,
             2150,2200,2260,2300,2320,2350,2380,2400,2420,2450,2490,2500,2600,2700,2800,
             2900,3000,3100,3200,3300,3400,3500,3600,3700,3800,3900,4000)
-  TAI<-predict(a,data.frame(LAMBDA))*0.1
+  TAI<-predict(a,data.frame(LAMBDA))
   # Soil properties (mineral component only)
   Thcond <- 2.5 # soil minerals thermal conductivity (W/mC)
   SpecHeat <- 870 # soil minerals specific heat (J/kg-K)
