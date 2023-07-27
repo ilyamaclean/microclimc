@@ -70,6 +70,7 @@
 #' # Run NicheMapR with default parameters and inbuilt weather datasets
 #' library(NicheMapR)
 #' # Plot air temperatures
+#' microout<-runNMR(weather,dailyprecip,50.2178,-5.32656,0.05,0.1,PAI=1)
 #' metout <- microout$metout
 #' tmn <- min(metout$TALOC,metout$TAREF)
 #' tmx <- max(metout$TALOC,metout$TAREF)
